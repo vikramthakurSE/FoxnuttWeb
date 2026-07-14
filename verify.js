@@ -2,42 +2,37 @@ const { sfQuery } = require('./_sf');
 
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
+  if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).end();
 
-  const { phone } = req.body;
-  if (!phone || phone.length !== 10) {
-    return res.status(400).json({ error: 'Invalid phone number.' });
-  }
+  const body  = req.body || {};
+  const phone = (body.phone || '').toString().trim();
+  if (phone.length !== 10)
+    return res.status(400).json({ error: 'Enter a valid 10-digit number.' });
+
+  // Surface missing env vars clearly
+  const required = ['SF_CLIENT_ID','SF_CLIENT_SECRET','SF_USERNAME',
+                    'SF_PASSWORD','SF_SECURITY_TOKEN','SF_LOGIN_URL'];
+  const missing  = required.filter(k => !process.env[k]);
+  if (missing.length)
+    return res.status(500).json({ error: 'Missing: ' + missing.join(', ') });
 
   try {
-    // Search by last 10 digits to handle different formats
-    const soql = `
-      SELECT Id, Name, Phone, Account_Balance__c
-      FROM Account
-      WHERE RecordType.Name = 'Client'
-      AND (Phone LIKE '%${phone}'
-           OR Phone = '${phone}'
-           OR Phone = '+91${phone}'
-           OR Phone = '91${phone}')
-      LIMIT 1
-    `;
-    const result = await sfQuery(soql);
+    const soql =
+      "SELECT Id, Name, Phone, Account_Balance__c FROM Account " +
+      "WHERE RecordType.Name = 'Client' AND (" +
+      "Phone LIKE '%" + phone + "' OR " +
+      "Phone = '" + phone + "' OR " +
+      "Phone = '+91" + phone + "' OR " +
+      "Phone = '91" + phone + "') LIMIT 1";
 
-    if (!result.records || result.records.length === 0) {
-      return res.status(401).json({
-        error: 'Mobile number not registered with us. Contact Nutty Nirvana.'
-      });
-    }
+    const result = await sfQuery(soql);
+    if (!result.records || !result.records.length)
+      return res.status(401).json({ error: 'Number not registered. Contact Nutty Nirvana.' });
 
     const acc = result.records[0];
-    return res.json({
-      accountId: acc.Id,
-      name:      acc.Name,
-      phone:     phone,
-      balance:   acc.Account_Balance__c || 0
-    });
+    return res.json({ accountId: acc.Id, name: acc.Name, phone, balance: acc.Account_Balance__c || 0 });
   } catch (e) {
-    console.error('Verify error:', e);
-    return res.status(500).json({ error: 'Server error. Try again.' });
+    return res.status(500).json({ error: 'SF Error: ' + e.message });
   }
 };

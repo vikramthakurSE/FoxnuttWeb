@@ -1,0 +1,7 @@
+{
+  "name": "nutty-nirvana-portal",
+  "version": "1.0.0",
+  "description": "Nutty Nirvana — Client Ordering Portal",
+  "engines": { "node": ">=18" },
+  "dependencies": {}
+}

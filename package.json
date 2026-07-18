@@ -1,7 +1,6 @@
 {
-  "name": "nutty-nirvana-portal",
-  "version": "1.0.0",
-  "description": "Nutty Nirvana — Client Ordering Portal",
-  "engines": { "node": ">=18" },
-  "dependencies": {}
+  "name": "foxnutt-portal",
+  "version": "2.0.0",
+  "private": true,
+  "type": "module"
 }

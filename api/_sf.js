@@ -1,68 +1,64 @@
-// Shared Salesforce REST API helper
-// Uses Username-Password OAuth flow
+// Salesforce connection helper — username-password OAuth, token cached per warm lambda.
+// Env vars (Vercel → Project → Settings → Environment Variables):
+//   SF_LOGIN_URL      e.g. https://login.salesforce.com  (or your My Domain)
+//   SF_CLIENT_ID      Connected App consumer key
+//   SF_CLIENT_SECRET  Connected App consumer secret
+//   SF_USERNAME       integration user
+//   SF_PASSWORD       password + security token concatenated
 
-let _token = null;
-let _instanceUrl = null;
-let _tokenExpiry = 0;
+let cached = null; // { accessToken, instanceUrl, expiresAt }
 
-async function getSFToken() {
-  if (_token && Date.now() < _tokenExpiry) {
-    return { token: _token, instanceUrl: _instanceUrl };
-  }
-
-  const params = new URLSearchParams({
-    grant_type:    'password',
-    client_id:     process.env.SF_CLIENT_ID,
+async function login() {
+  const body = new URLSearchParams({
+    grant_type: 'password',
+    client_id: process.env.SF_CLIENT_ID,
     client_secret: process.env.SF_CLIENT_SECRET,
-    username:      process.env.SF_USERNAME,
-    password:      process.env.SF_PASSWORD + process.env.SF_SECURITY_TOKEN
+    username: process.env.SF_USERNAME,
+    password: process.env.SF_PASSWORD,
   });
-
-  const res = await fetch(
-    (process.env.SF_LOGIN_URL || 'https://login.salesforce.com') +
-    '/services/oauth2/token',
-    { method: 'POST', body: params }
-  );
-  const data = await res.json();
-
-  if (!data.access_token) {
-    throw new Error('SF auth failed: ' + JSON.stringify(data));
-  }
-
-  _token       = data.access_token;
-  _instanceUrl = data.instance_url;
-  _tokenExpiry = Date.now() + 50 * 60 * 1000; // 50 min
-  return { token: _token, instanceUrl: _instanceUrl };
+  const r = await fetch(`${process.env.SF_LOGIN_URL}/services/oauth2/token`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body,
+  });
+  if (!r.ok) throw new Error(`Salesforce login failed: ${r.status}`);
+  const data = await r.json();
+  cached = {
+    accessToken: data.access_token,
+    instanceUrl: data.instance_url,
+    expiresAt: Date.now() + 90 * 60 * 1000, // refresh well before 2h default
+  };
+  return cached;
 }
 
-async function sfQuery(soql) {
-  const { token, instanceUrl } = await getSFToken();
-  const res = await fetch(
-    instanceUrl + '/services/data/v59.0/query?q=' +
-    encodeURIComponent(soql),
-    { headers: { Authorization: 'Bearer ' + token } }
-  );
-  const data = await res.json();
-  if (!res.ok) throw new Error(JSON.stringify(data));
-  return data;
+async function session() {
+  if (cached && cached.expiresAt > Date.now()) return cached;
+  return login();
 }
 
-async function sfInsert(sobject, record) {
-  const { token, instanceUrl } = await getSFToken();
-  const res = await fetch(
-    instanceUrl + '/services/data/v59.0/sobjects/' + sobject,
-    {
-      method:  'POST',
+/** Call an Apex REST endpoint. path e.g. '/portal/auth'. Retries once on 401. */
+export async function sfApex(path, { method = 'GET', body, query } = {}) {
+  let s = await session();
+  const qs = query ? '?' + new URLSearchParams(query).toString() : '';
+  const doFetch = () =>
+    fetch(`${s.instanceUrl}/services/apexrest${path}${qs}`, {
+      method,
       headers: {
-        Authorization:  'Bearer ' + token,
-        'Content-Type': 'application/json'
+        Authorization: `Bearer ${s.accessToken}`,
+        'Content-Type': 'application/json',
       },
-      body: JSON.stringify(record)
-    }
-  );
-  const data = await res.json();
-  if (!res.ok) throw new Error(JSON.stringify(data));
-  return data;
-}
+      body: body ? JSON.stringify(body) : undefined,
+    });
 
-module.exports = { getSFToken, sfQuery, sfInsert };
+  let r = await doFetch();
+  if (r.status === 401) {
+    s = await login();
+    r = await doFetch();
+  }
+  const text = await r.text();
+  let json;
+  try { json = JSON.parse(text); } catch { json = { ok: false, message: text }; }
+  // Apex REST sometimes double-serializes strings
+  if (typeof json === 'string') { try { json = JSON.parse(json); } catch {} }
+  return { status: r.status, json };
+}

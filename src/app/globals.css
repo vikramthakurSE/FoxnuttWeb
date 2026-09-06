@@ -1,0 +1,53 @@
+@import "tailwindcss";
+
+@theme {
+  /* Nutty Nirvana catalogue palette */
+  --color-cream: #faf3e6;
+  --color-cream-2: #f3e8d2;
+  --color-card: #fffdf7;
+  --color-ink: #2e1f14;
+  --color-ink-soft: #6b5744;
+  --color-terra: #c2401f;
+  --color-terra-dark: #9e3115;
+  --color-gold: #b8862f;
+  --color-leaf: #5c7a1e;
+  --color-line: #e7d9bd;
+
+  --font-display: var(--font-fraunces), Georgia, "Times New Roman", serif;
+  --font-body: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+
+  --shadow-card: 0 1px 2px rgba(46, 31, 20, 0.06),
+    0 8px 24px -12px rgba(46, 31, 20, 0.18);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--color-cream);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3,
+.font-display {
+  font-family: var(--font-display);
+}
+
+/* Subtle paper texture on the page ground */
+.paper {
+  background-image: radial-gradient(
+      rgba(184, 134, 47, 0.05) 1px,
+      transparent 1px
+    );
+  background-size: 22px 22px;
+}
+
+input,
+textarea {
+  font-size: 16px; /* prevents iOS zoom on focus */
+}

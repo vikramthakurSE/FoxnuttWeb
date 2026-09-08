@@ -1,7 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import { randomUUID } from "crypto";
 import { sql, hasDb } from "@/lib/db";
 import { getSession } from "@/lib/session";
+import { resyncFailedOrders } from "@/lib/resync";
 import { getCatalog } from "@/lib/catalog";
 import {
   placeOrder,
@@ -129,6 +130,9 @@ export async function POST(req: NextRequest) {
     address: body.address.trim(),
     gstin: body.gstin?.trim() || null,
     note: body.note?.trim() || null,
+    // Retries must resolve the same account, so remember how this order
+    // identified itself rather than falling back to a phone match.
+    businessCode,
   };
 
   // Demo mode: simulate what Salesforce would do, including the
@@ -228,6 +232,18 @@ export async function POST(req: NextRequest) {
       UPDATE customers SET sf_account_id = ${result.accountId}
       WHERE id = ${customer.id}
     `;
+    // Salesforce is clearly reachable right now, so drain anything that got
+    // stuck earlier. Runs after the response, so the customer waits on none
+    // of it, and it keeps the retry lag to the next order rather than the
+    // next daily cron — Vercel's Hobby plan allows only one cron a day.
+    after(async () => {
+      try {
+        const swept = await resyncFailedOrders(10);
+        if (swept.synced) console.log(`resync: ${swept.synced} order(s) recovered`);
+      } catch (e) {
+        console.error("resync sweep failed:", e);
+      }
+    });
     return NextResponse.json({
       ok: true,
       orderId,
@@ -249,7 +265,8 @@ export async function POST(req: NextRequest) {
         last_error = ${String(e).slice(0, 500)}, updated_at = now()
       WHERE id = ${orderId}
     `;
-    // The retry cron will pick it up — tell the customer it's received
+    // Their order is safely recorded; the next order or the daily cron will
+    // push it through. Tell the customer it's received rather than failed.
     return NextResponse.json({
       ok: true,
       orderId,

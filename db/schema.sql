@@ -43,24 +43,3 @@ create table if not exists orders (
 );
 create index if not exists orders_phone_idx on orders (phone, created_at desc);
 create index if not exists orders_status_idx on orders (status);
-
--- ── WhatsApp reverse-verification ──────────────────────────────────────
--- The customer sends a pre-filled code TO our business number. Meta's
--- webhook delivers it along with the sender's real number, which is what
--- makes this proof of ownership: the phone is never taken from user input.
--- Uses only inbound messaging, so it needs no approved template and no
--- Meta business verification.
-create table if not exists wa_verifications (
-  token       text primary key,              -- opaque handle held by the browser
-  code        text not null,                 -- what the customer sends us
-  phone       text,                          -- filled in from the webhook sender
-  wa_name     text,                          -- WhatsApp profile name, for prefill
-  verified    boolean not null default false,
-  consumed    boolean not null default false,-- session issued; cannot be reused
-  expires_at  timestamptz not null,
-  created_at  timestamptz not null default now()
-);
-create index if not exists wa_verifications_code_idx
-  on wa_verifications (code) where verified = false;
-create index if not exists wa_verifications_created_idx
-  on wa_verifications (created_at desc);

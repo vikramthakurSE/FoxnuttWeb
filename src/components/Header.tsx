@@ -2,7 +2,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 import { useCart } from "./CartProvider";
+import BusinessCodeLogin from "./BusinessCodeLogin";
 
 const links = [
   { href: "/", label: "Home" },
@@ -13,6 +15,20 @@ const links = [
 export default function Header() {
   const { count, ready } = useCart();
   const pathname = usePathname();
+  const [account, setAccount] = useState<string | null>(null);
+  const [showLogin, setShowLogin] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/session")
+      .then((r) => r.json())
+      .then((d) => setAccount(d.session?.accountName ?? null))
+      .catch(() => {});
+  }, [pathname]);
+
+  async function logout() {
+    await fetch("/api/session", { method: "DELETE" });
+    setAccount(null);
+  }
 
   return (
     <header className="sticky top-0 z-40 bg-cream/95 backdrop-blur border-b border-line">
@@ -40,6 +56,24 @@ export default function Header() {
               {l.label}
             </Link>
           ))}
+          {account ? (
+            <button
+              type="button"
+              onClick={() => void logout()}
+              title={`Signed in as ${account}`}
+              className="hidden sm:inline-block max-w-[9rem] truncate px-2.5 py-1.5 text-ink-soft hover:text-ink"
+            >
+              {account}
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setShowLogin(true)}
+              className="px-2.5 py-1.5 rounded-full text-ink-soft hover:text-ink"
+            >
+              Login
+            </button>
+          )}
           <Link
             href="/cart"
             aria-label="Cart"
@@ -67,6 +101,43 @@ export default function Header() {
           </Link>
         </nav>
       </div>
+
+      {showLogin && (
+        <div
+          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-ink/40 p-4"
+          onClick={() => setShowLogin(false)}
+        >
+          <div
+            className="w-full max-w-sm rounded-2xl bg-card border border-line shadow-card p-5"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h2 className="font-display text-xl font-bold">Login</h2>
+                <p className="mt-1 text-sm text-ink-soft">
+                  Use the business code we sent you on WhatsApp.
+                </p>
+              </div>
+              <button
+                type="button"
+                aria-label="Close"
+                onClick={() => setShowLogin(false)}
+                className="-mt-1 text-2xl leading-none text-ink-soft hover:text-ink"
+              >
+                &times;
+              </button>
+            </div>
+            <div className="mt-4">
+              <BusinessCodeLogin
+                onLoggedIn={(a) => {
+                  setAccount(a.accountName);
+                  setShowLogin(false);
+                }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </header>
   );
 }

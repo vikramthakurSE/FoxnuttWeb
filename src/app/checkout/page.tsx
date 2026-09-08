@@ -5,9 +5,11 @@ import { useEffect, useState } from "react";
 import type { SfProduct } from "@/lib/salesforce";
 import { formatINR } from "@/lib/format";
 import { useCart } from "@/components/CartProvider";
-import PhoneVerify, { type VerifiedCustomer } from "@/components/PhoneVerify";
+import BusinessCodeLogin, {
+  type LoggedInAccount,
+} from "@/components/BusinessCodeLogin";
 
-type Step = "verify" | "details" | "done";
+type Step = "identify" | "details" | "done";
 
 interface PlacedOrder {
   saleName: string | null;
@@ -19,8 +21,13 @@ interface PlacedOrder {
 export default function CheckoutPage() {
   const { items, clear, ready } = useCart();
   const [products, setProducts] = useState<SfProduct[] | null>(null);
-  const [step, setStep] = useState<Step>("verify");
+  const [step, setStep] = useState<Step>("identify");
   const [phone, setPhone] = useState<string | null>(null);
+  const [code, setCode] = useState<string | null>(null);
+  const [accountName, setAccountName] = useState<string | null>(null);
+  // First-time buyers have no code and type their own number instead.
+  const [firstTime, setFirstTime] = useState(false);
+  const [typedPhone, setTypedPhone] = useState("");
 
   const [name, setName] = useState("");
   const [businessName, setBusinessName] = useState("");
@@ -32,15 +39,17 @@ export default function CheckoutPage() {
   const [error, setError] = useState<string | null>(null);
   const [placed, setPlaced] = useState<PlacedOrder | null>(null);
 
-  // Already verified in this browser? Skip the OTP step.
+  // Already logged in with a business code in this browser? Skip ahead.
   useEffect(() => {
     fetch("/api/session")
       .then((r) => r.json())
       .then((d) => {
         if (d.session?.phone) {
           setPhone(d.session.phone as string);
+          setCode((d.session.code as string) ?? null);
+          setAccountName((d.session.accountName as string) ?? null);
           if (d.session.name) setName(d.session.name as string);
-          setStep((s) => (s === "verify" ? "details" : s));
+          setStep((s) => (s === "identify" ? "details" : s));
         }
       })
       .catch(() => {});
@@ -79,6 +88,8 @@ export default function CheckoutPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           items: items.map((i) => ({ slug: i.slug, packets: i.packets })),
+          businessCode: code ?? undefined,
+          phone: code ? undefined : typedPhone,
           name,
           businessName,
           address,
@@ -153,28 +164,89 @@ export default function CheckoutPage() {
         </>
       )}
 
-      {/* Step 1 — verify phone */}
-      {step === "verify" && (
+      {/* Step 1 — identify: business code, or first-time details */}
+      {step === "identify" && (
         <div className="mt-6 rounded-2xl bg-card border border-line shadow-card p-5">
-          <h2 className="font-display text-xl font-bold">
-            Verify your number
-          </h2>
-          <p className="mt-1 mb-4 text-sm text-ink-soft">
-            We use your WhatsApp number to link your orders and send updates.
-          </p>
-          <PhoneVerify
-            onVerified={(p, customer: VerifiedCustomer | null) => {
-              setPhone(p);
-              if (customer) {
-                if (customer.name) setName(customer.name);
-                if (customer.business_name)
-                  setBusinessName(customer.business_name);
-                if (customer.address) setAddress(customer.address);
-                if (customer.gstin) setGstin(customer.gstin);
-              }
-              setStep("details");
-            }}
-          />
+          {!firstTime ? (
+            <>
+              <h2 className="font-display text-xl font-bold">
+                Enter your business code
+              </h2>
+              <p className="mt-1 mb-4 text-sm text-ink-soft">
+                We sent this to you on WhatsApp when we opened your account.
+              </p>
+              <BusinessCodeLogin
+                onLoggedIn={(a: LoggedInAccount) => {
+                  setCode(a.code);
+                  setAccountName(a.accountName);
+                  if (a.accountName) setName(a.accountName);
+                  if (a.address) setAddress(a.address);
+                  if (a.gstin) setGstin(a.gstin);
+                  setStep("details");
+                }}
+              />
+              <div className="mt-5 border-t border-line pt-4 text-center">
+                <p className="text-sm text-ink-soft">Ordering for the first time?</p>
+                <button
+                  type="button"
+                  onClick={() => setFirstTime(true)}
+                  className="mt-1 text-sm font-semibold text-terra hover:underline"
+                >
+                  Continue without a code
+                </button>
+              </div>
+            </>
+          ) : (
+            <>
+              <h2 className="font-display text-xl font-bold">
+                First time ordering
+              </h2>
+              <p className="mt-1 mb-4 text-sm text-ink-soft">
+                We&apos;ll open an account for you and send your business code
+                on WhatsApp, so your next order is one tap.
+              </p>
+              <label className="block text-sm font-semibold" htmlFor="nn-phone">
+                WhatsApp mobile number
+              </label>
+              <div className="mt-1.5 flex gap-2">
+                <span className="flex h-12 items-center rounded-xl border border-line bg-cream-2 px-3 text-sm font-semibold text-ink-soft">
+                  +91
+                </span>
+                <input
+                  id="nn-phone"
+                  type="tel"
+                  inputMode="numeric"
+                  autoComplete="tel-national"
+                  placeholder="10-digit number"
+                  value={typedPhone}
+                  onChange={(e) =>
+                    setTypedPhone(e.target.value.replace(/\D/g, "").slice(0, 10))
+                  }
+                  className="h-12 flex-1 rounded-xl border border-line bg-card px-4 outline-none focus:border-terra"
+                />
+              </div>
+              <button
+                type="button"
+                disabled={typedPhone.length !== 10}
+                onClick={() => {
+                  setPhone(typedPhone);
+                  setStep("details");
+                }}
+                className="mt-3 h-12 w-full rounded-full bg-terra font-semibold text-cream hover:bg-terra-dark disabled:opacity-50"
+              >
+                Continue
+              </button>
+              <div className="mt-5 border-t border-line pt-4 text-center">
+                <button
+                  type="button"
+                  onClick={() => setFirstTime(false)}
+                  className="text-sm font-semibold text-terra hover:underline"
+                >
+                  I have a business code
+                </button>
+              </div>
+            </>
+          )}
         </div>
       )}
 
@@ -189,7 +261,18 @@ export default function CheckoutPage() {
         >
           <h2 className="font-display text-xl font-bold">Delivery details</h2>
           <p className="mt-1 text-sm text-ink-soft">
-            Ordering as <span className="font-semibold">+91 {phone}</span>
+            {accountName ? (
+              <>
+                Ordering as{" "}
+                <span className="font-semibold">{accountName}</span>{" "}
+                <span className="text-xs">({code})</span>
+              </>
+            ) : (
+              <>
+                Ordering as{" "}
+                <span className="font-semibold">+91 {phone ?? typedPhone}</span>
+              </>
+            )}
           </p>
 
           <label className="mt-4 block text-sm font-semibold" htmlFor="nn-name">

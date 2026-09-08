@@ -29,6 +29,9 @@ export interface SfOrderItem {
 }
 
 export interface SfOrderInput {
+  /** Existing client's login code. When set, Salesforce ignores the phone
+   *  and takes the account from the code. */
+  businessCode?: string;
   phone: string;
   name: string;
   businessName?: string;
@@ -172,6 +175,25 @@ export async function placeOrder(input: SfOrderInput): Promise<SfOrderResult> {
   if (!res.ok) throw new Error(await readError(res));
   const json = (await res.json()) as { order: SfOrderResult };
   return json.order;
+}
+
+export interface SfCodeLookup {
+  found: boolean;
+  accountId?: string;
+  accountName?: string;
+  phone?: string;
+  code?: string;
+  address?: string;
+  gstin?: string;
+}
+
+/** Resolve a client's business code to their Salesforce account. */
+export async function verifyCode(code: string): Promise<SfCodeLookup> {
+  const res = await sfFetch(
+    `/store/v1/verify-code?code=${encodeURIComponent(code)}`
+  );
+  if (!res.ok) throw new Error(await readError(res));
+  return (await res.json()) as SfCodeLookup;
 }
 
 export async function fetchOrders(phone: string): Promise<SfPastOrder[]> {

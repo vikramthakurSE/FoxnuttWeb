@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import type { SfPastOrder } from "@/lib/salesforce";
 import { formatDate, formatINR, formatKg } from "@/lib/format";
-import PhoneVerify from "@/components/PhoneVerify";
+import BusinessCodeLogin from "@/components/BusinessCodeLogin";
 
 const STATUS_STYLES: Record<string, string> = {
   "Pending Approval": "bg-gold/15 text-gold",
@@ -72,12 +72,11 @@ export default function OrdersPage() {
         <h1 className="font-display text-3xl font-bold">My orders</h1>
         <div className="mt-5 rounded-2xl bg-card border border-line shadow-card p-5">
           <p className="mb-4 text-sm text-ink-soft">
-            Verify your WhatsApp number to see your order history and live
-            status.
+            Enter your business code to see your order history and live
+            status. It&apos;s in the welcome message we sent you on WhatsApp.
           </p>
-          <PhoneVerify
-            onVerified={(p) => {
-              setPhone(p);
+          <BusinessCodeLogin
+            onLoggedIn={() => {
               setState("loading");
               void loadOrders();
             }}

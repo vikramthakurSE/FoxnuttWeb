@@ -14,10 +14,10 @@ import { isDemo, demoStore, nextSaleName } from "@/lib/demo";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-interface CartItem {
+type CartItem = {
   slug: string;
   packets: number;
-}
+};
 interface OrderBody {
   items: CartItem[];
   name: string;
@@ -25,17 +25,26 @@ interface OrderBody {
   address: string;
   gstin?: string;
   note?: string;
+  /** Existing client, logged in with their code. */
+  businessCode?: string;
+  /** First-time buyer with no code — they typed their own number. */
+  phone?: string;
+}
+
+/** Strip to the last 10 digits, mirroring lib/session normalizePhone. */
+function tidyPhone(raw: string | undefined): string | null {
+  if (!raw) return null;
+  let d = raw.replace(/[^0-9]/g, "");
+  if (d.length > 10) d = d.slice(-10);
+  return d.length === 10 ? d : null;
 }
 
 // ── Place an order ───────────────────────────────────────────────────────
 export async function POST(req: NextRequest) {
+  // Two ways to order: logged in with a business code, or as a first-time
+  // buyer who supplies their own number. No login is required to place an
+  // order, so an absent session is normal here, not an error.
   const session = await getSession();
-  if (!session) {
-    return NextResponse.json(
-      { error: "Please verify your phone number first." },
-      { status: 401 }
-    );
-  }
   if (!hasDb() && !isDemo()) {
     return NextResponse.json(
       { error: "The store is not fully set up yet (database missing)." },
@@ -48,6 +57,27 @@ export async function POST(req: NextRequest) {
     body = (await req.json()) as OrderBody;
   } catch {
     return NextResponse.json({ error: "Invalid request." }, { status: 400 });
+  }
+
+  // The session's code beats anything the browser sends, so a stale or
+  // forged businessCode in the body cannot redirect an order to another
+  // account. Salesforce re-checks the code regardless.
+  const businessCode = session?.code ?? body.businessCode?.trim() ?? null;
+  const orderPhone = session?.phone ?? tidyPhone(body.phone);
+  if (!businessCode && !orderPhone) {
+    return NextResponse.json(
+      { error: "Enter your business code, or a 10-digit number to order as a first-time customer." },
+      { status: 400 }
+    );
+  }
+  // A logged-in session always carries the account's phone. Reaching here
+  // without one means a code was posted with no session behind it, and the
+  // local customers row (phone NOT NULL) could not be written.
+  if (!orderPhone) {
+    return NextResponse.json(
+      { error: "Your session expired. Please enter your business code again." },
+      { status: 401 }
+    );
   }
 
   if (!body.items?.length) {
@@ -104,13 +134,13 @@ export async function POST(req: NextRequest) {
   // Demo mode: simulate what Salesforce would do, including the
   // known-client (auto-confirm) vs new-customer (hold) branch.
   if (isDemo() && !hasDb()) {
+    const demoPhone = orderPhone ?? "0000000000";
     const store = demoStore();
-    const known =
-      store.knownClients.has(session.phone) ||
-      store.customers.has(session.phone);
-    const status = known ? "Confirmed" : "Pending Approval";
+    // Mirrors the real rule: every website order waits for approval.
+    const status = "Pending Approval";
+    const known = Boolean(businessCode) || store.customers.has(demoPhone);
     const saleName = nextSaleName();
-    store.customers.set(session.phone, {
+    store.customers.set(demoPhone, {
       name: payload.name,
       businessName: payload.businessName,
       address: payload.address,
@@ -118,7 +148,7 @@ export async function POST(req: NextRequest) {
     });
     store.orders.unshift({
       id: orderId,
-      phone: session.phone,
+      phone: demoPhone,
       saleName,
       status,
       total,
@@ -136,7 +166,7 @@ export async function POST(req: NextRequest) {
         };
       }),
     });
-    console.log(`[DEMO] Order ${saleName} (${status}) for +91${session.phone}`);
+    console.log(`[DEMO] Order ${saleName} (${status}) for +91${demoPhone}`);
     return NextResponse.json({
       ok: true,
       orderId,
@@ -152,7 +182,7 @@ export async function POST(req: NextRequest) {
   // Upsert the customer profile, then record the order before syncing
   const [customer] = await db<{ id: string }[]>`
     INSERT INTO customers (phone, name, business_name, address, gstin, last_order_at)
-    VALUES (${session.phone}, ${payload.name}, ${payload.businessName},
+    VALUES (${orderPhone}, ${payload.name}, ${payload.businessName},
             ${payload.address}, ${payload.gstin}, now())
     ON CONFLICT (phone) DO UPDATE SET
       name = EXCLUDED.name,
@@ -162,16 +192,23 @@ export async function POST(req: NextRequest) {
       last_order_at = now()
     RETURNING id
   `;
+  // Hand the object to db.json, not JSON.stringify: pre-stringifying stores
+  // a jsonb *string* rather than an object, after which payload->>'items'
+  // reads back null and the retry cron silently resyncs nothing.
+  // The cast is only to satisfy postgres.js's JSONValue type, which does not
+  // admit arrays of named types even though it serializes them correctly.
   await db`
     INSERT INTO orders (id, customer_id, phone, payload, total)
-    VALUES (${orderId}, ${customer.id}, ${session.phone},
-            ${JSON.stringify(payload)}::jsonb, ${total.toFixed(2)})
+    VALUES (${orderId}, ${customer.id}, ${orderPhone},
+            ${db.json(payload as unknown as Parameters<typeof db.json>[0])},
+            ${total.toFixed(2)})
   `;
 
   // Sync to Salesforce — the order row survives even if this fails
   try {
     const result = await placeOrder({
-      phone: session.phone,
+      businessCode: businessCode ?? undefined,
+      phone: orderPhone ?? "",
       name: payload.name,
       businessName: payload.businessName ?? undefined,
       address: payload.address,

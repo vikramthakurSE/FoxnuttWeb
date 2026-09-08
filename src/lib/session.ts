@@ -7,6 +7,10 @@ const MAX_AGE_S = 60 * 60 * 24 * 30; // 30 days
 export interface Session {
   phone: string; // normalized 10 digits
   name?: string;
+  /** Present when the visitor logged in with their business code. */
+  code?: string;
+  /** Salesforce account name behind that code. */
+  accountName?: string;
 }
 
 function secret(): Uint8Array {
@@ -24,7 +28,12 @@ export function normalizePhone(raw: string | null | undefined): string | null {
 }
 
 export async function createSession(session: Session): Promise<void> {
-  const token = await new SignJWT({ phone: session.phone, name: session.name })
+  const token = await new SignJWT({
+    phone: session.phone,
+    name: session.name,
+    code: session.code,
+    accountName: session.accountName,
+  })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime(`${MAX_AGE_S}s`)
@@ -44,7 +53,12 @@ export async function getSession(): Promise<Session | null> {
   try {
     const { payload } = await jwtVerify(token, secret());
     if (typeof payload.phone !== "string") return null;
-    return { phone: payload.phone, name: payload.name as string | undefined };
+    return {
+      phone: payload.phone,
+      name: payload.name as string | undefined,
+      code: payload.code as string | undefined,
+      accountName: payload.accountName as string | undefined,
+    };
   } catch {
     return null;
   }

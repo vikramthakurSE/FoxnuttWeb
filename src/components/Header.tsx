@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useCart } from "./CartProvider";
-import BusinessCodeLogin from "./BusinessCodeLogin";
+import LoginModal from "./LoginModal";
 
 const links = [
   { href: "/", label: "Home" },
@@ -102,42 +102,14 @@ export default function Header() {
         </nav>
       </div>
 
-      {showLogin && (
-        <div
-          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-ink/40 p-4"
-          onClick={() => setShowLogin(false)}
-        >
-          <div
-            className="w-full max-w-sm rounded-2xl bg-card border border-line shadow-card p-5"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <h2 className="font-display text-xl font-bold">Login</h2>
-                <p className="mt-1 text-sm text-ink-soft">
-                  Use the business code we sent you on WhatsApp.
-                </p>
-              </div>
-              <button
-                type="button"
-                aria-label="Close"
-                onClick={() => setShowLogin(false)}
-                className="-mt-1 text-2xl leading-none text-ink-soft hover:text-ink"
-              >
-                &times;
-              </button>
-            </div>
-            <div className="mt-4">
-              <BusinessCodeLogin
-                onLoggedIn={(a) => {
-                  setAccount(a.accountName);
-                  setShowLogin(false);
-                }}
-              />
-            </div>
-          </div>
-        </div>
-      )}
+      <LoginModal
+        open={showLogin}
+        onClose={() => setShowLogin(false)}
+        onLoggedIn={(a) => {
+          setAccount(a.accountName);
+          setShowLogin(false);
+        }}
+      />
     </header>
   );
 }

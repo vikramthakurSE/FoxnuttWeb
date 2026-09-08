@@ -374,11 +374,16 @@ export default function CheckoutPage() {
           )}
           <p className="mt-3 text-sm text-ink-soft">
             {placed.status === "Confirmed"
-              ? "Your order is confirmed — the confirmation is on its way to your WhatsApp."
-              : placed.newCustomer
-                ? "Since this is your first order with us, we'll quickly review it and confirm on WhatsApp shortly."
-                : "We've received your order and will confirm it on WhatsApp shortly."}
+              ? "Your order is confirmed — the details are on their way to your WhatsApp."
+              : "Thank you for your first order with us! One of our executives will get in touch with you shortly to confirm the details and complete your order."}
           </p>
+          {placed.status !== "Confirmed" && (
+            <p className="mt-3 rounded-xl border border-gold/40 bg-gold/10 px-4 py-3 text-sm">
+              We&apos;ve also sent you a WhatsApp message with your{" "}
+              <span className="font-semibold">business code</span> — use it to
+              log in and order in one step next time.
+            </p>
+          )}
           <p className="mt-1 font-bold">{formatINR(placed.total)}</p>
           <div className="mt-6 flex flex-col gap-2">
             <Link

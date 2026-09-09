@@ -24,7 +24,7 @@ export default function Footer() {
             </li>
             <li>
               <a href="tel:+917277474053" className="hover:text-gold">
-                Vikram — +91 72774 74053
+                Vikram — +91 96204 05311
               </a>
             </li>
             <li>

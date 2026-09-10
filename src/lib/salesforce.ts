@@ -53,9 +53,46 @@ export interface SfOrderResult {
   duplicate: boolean;
 }
 
+export interface SfOrderEditResult {
+  saleName: string;
+  status: string;
+  total: number;
+  returnedForApproval: boolean;
+}
+
+/** Customer cancels their own order. Ownership is checked in Salesforce. */
+export async function cancelOrder(
+  businessCode: string,
+  saleId: string
+): Promise<SfOrderEditResult> {
+  const res = await sfFetch("/store/v1/cancel-order", {
+    method: "POST",
+    body: JSON.stringify({ businessCode, saleId }),
+  });
+  if (res.status === 400) throw new SalesforceUserError(await readError(res));
+  if (!res.ok) throw new Error(await readError(res));
+  return ((await res.json()) as { order: SfOrderEditResult }).order;
+}
+
+/** Customer changes pack counts on their own order. 0 drops the line. */
+export async function modifyOrder(
+  businessCode: string,
+  saleId: string,
+  lines: Record<string, number>
+): Promise<SfOrderEditResult> {
+  const res = await sfFetch("/store/v1/modify-order", {
+    method: "POST",
+    body: JSON.stringify({ businessCode, saleId, lines }),
+  });
+  if (res.status === 400) throw new SalesforceUserError(await readError(res));
+  if (!res.ok) throw new Error(await readError(res));
+  return ((await res.json()) as { order: SfOrderEditResult }).order;
+}
+
 export interface SfPastOrder {
   saleId: string;
   saleName: string;
+  editable?: boolean;
   orderRef: string | null;
   saleDate: string;
   status: string;
@@ -65,6 +102,7 @@ export interface SfPastOrder {
   balanceDue: number | null;
   expectedDelivery: string | null;
   items: {
+    lineId?: string;
     brand: string;
     packetType: string;
     quantityKg: number;

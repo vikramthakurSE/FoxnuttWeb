@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import type { SfPastOrder } from "@/lib/salesforce";
 import { formatDate, formatINR, formatKg } from "@/lib/format";
+import OrderActions from "@/components/OrderActions";
 import BusinessCodeLogin from "@/components/BusinessCodeLogin";
 
 const STATUS_STYLES: Record<string, string> = {
@@ -177,6 +178,16 @@ export default function OrdersPage() {
                         : ""}
                 </span>
               </div>
+
+              {o.editable && (
+                <OrderActions
+                  order={o}
+                  onDone={() => {
+                    setState("loading");
+                    void loadOrders();
+                  }}
+                />
+              )}
             </div>
           ))}
         </div>

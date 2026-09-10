@@ -3,6 +3,10 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import BusinessCodeLogin, { type LoggedInAccount } from "./BusinessCodeLogin";
+import RequestCode from "./RequestCode";
+import RegisterForm from "./RegisterForm";
+
+type View = "login" | "request" | "notFound" | "register";
 
 /**
  * Login dialog.
@@ -22,7 +26,30 @@ export default function LoginModal({
   onLoggedIn: (account: LoggedInAccount) => void;
 }) {
   const [mounted, setMounted] = useState(false);
+  const [view, setView] = useState<View>("login");
+  const [knownPhone, setKnownPhone] = useState("");
   useEffect(() => setMounted(true), []);
+
+  // Always reopen on the login step, never mid-registration.
+  useEffect(() => {
+    if (open) {
+      setView("login");
+      setKnownPhone("");
+    }
+  }, [open]);
+
+  const titles: Record<View, string> = {
+    login: "Login",
+    request: "Request your code",
+    notFound: "Not registered",
+    register: "Register",
+  };
+  const subtitles: Record<View, string> = {
+    login: "Use the business code we sent you on WhatsApp.",
+    request: "We'll WhatsApp your code to the number we have on file.",
+    notFound: "",
+    register: "Takes a minute. We'll send your business code on WhatsApp.",
+  };
 
   // Escape to dismiss, and hold the page still behind the dialog.
   useEffect(() => {
@@ -73,14 +100,93 @@ export default function LoginModal({
         </button>
 
         <h2 id="nn-login-title" className="font-display text-xl font-bold">
-          Login
+          {titles[view]}
         </h2>
-        <p className="mt-1 text-sm text-ink-soft">
-          Use the business code we sent you on WhatsApp.
-        </p>
+        {subtitles[view] && (
+          <p className="mt-1 text-sm text-ink-soft">{subtitles[view]}</p>
+        )}
 
         <div className="mt-4">
-          <BusinessCodeLogin onLoggedIn={onLoggedIn} />
+          {view === "login" && (
+            <>
+              <BusinessCodeLogin onLoggedIn={onLoggedIn} />
+              <div className="mt-5 grid gap-2 border-t border-line pt-4">
+                <button
+                  type="button"
+                  onClick={() => setView("request")}
+                  className="h-11 w-full rounded-full border border-line font-semibold text-ink hover:bg-cream-2"
+                >
+                  Request code
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setView("register")}
+                  className="h-11 w-full rounded-full border border-terra/40 font-semibold text-terra hover:bg-terra/5"
+                >
+                  New here? Register
+                </button>
+              </div>
+            </>
+          )}
+
+          {view === "request" && (
+            <RequestCode
+              onBack={() => setView("login")}
+              onNotRegistered={(phone) => {
+                setKnownPhone(phone);
+                setView("notFound");
+              }}
+            />
+          )}
+
+          {view === "notFound" && (
+            <div className="text-center">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-terra/10 text-2xl">
+                !
+              </div>
+              <p className="mt-3 text-sm text-ink-soft">
+                <span className="font-semibold text-ink">+91 {knownPhone}</span>{" "}
+                is not registered with us yet.
+              </p>
+              <button
+                type="button"
+                onClick={() => setView("register")}
+                className="mt-4 h-12 w-full rounded-full bg-terra font-semibold text-cream hover:bg-terra-dark"
+              >
+                Register
+              </button>
+              <button
+                type="button"
+                onClick={() => setView("request")}
+                className="mt-2 w-full text-sm font-semibold text-ink-soft hover:text-ink"
+              >
+                Try another number
+              </button>
+            </div>
+          )}
+
+          {view === "register" && (
+            <>
+              <RegisterForm
+                initialPhone={knownPhone}
+                onRegistered={(a) =>
+                  onLoggedIn({
+                    accountName: a.accountName,
+                    code: a.code,
+                    address: null,
+                    gstin: null,
+                  })
+                }
+              />
+              <button
+                type="button"
+                onClick={() => setView("login")}
+                className="mt-2 w-full text-sm font-semibold text-ink-soft hover:text-ink"
+              >
+                I already have a code
+              </button>
+            </>
+          )}
         </div>
       </div>
     </div>,

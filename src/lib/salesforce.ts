@@ -187,6 +187,53 @@ export interface SfCodeLookup {
   gstin?: string;
 }
 
+export interface SfRegisterInput {
+  name: string;
+  phone: string;
+  address?: string;
+  locality: string;
+  city: string;
+  state: string;
+  pincode: string;
+  gstin?: string;
+}
+
+export interface SfRegisterResult {
+  accountId: string;
+  accountName: string;
+  businessCode: string;
+  alreadyRegistered: boolean;
+}
+
+/**
+ * Ask Salesforce to WhatsApp a client their login code.
+ * Returns false when the number is on no account — the code itself never
+ * comes back to the browser, so a stranger cannot read someone else's.
+ */
+export async function requestCode(phone: string): Promise<boolean> {
+  const res = await sfFetch("/store/v1/request-code", {
+    method: "POST",
+    body: JSON.stringify({ phone }),
+  });
+  if (!res.ok) throw new Error(await readError(res));
+  const json = (await res.json()) as { sent: boolean };
+  return json.sent;
+}
+
+/** Create a client account from the website registration form. */
+export async function registerClient(
+  input: SfRegisterInput
+): Promise<SfRegisterResult> {
+  const res = await sfFetch("/store/v1/register", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+  if (res.status === 400) throw new SalesforceUserError(await readError(res));
+  if (!res.ok) throw new Error(await readError(res));
+  const json = (await res.json()) as { account: SfRegisterResult };
+  return json.account;
+}
+
 /** Resolve a client's business code to their Salesforce account. */
 export async function verifyCode(code: string): Promise<SfCodeLookup> {
   const res = await sfFetch(

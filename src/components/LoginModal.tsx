@@ -6,7 +6,7 @@ import BusinessCodeLogin, { type LoggedInAccount } from "./BusinessCodeLogin";
 import RequestCode from "./RequestCode";
 import RegisterForm from "./RegisterForm";
 
-type View = "login" | "request" | "notFound" | "register";
+type View = "login" | "request" | "notFound" | "register" | "registered";
 
 /**
  * Login dialog.
@@ -28,6 +28,16 @@ export default function LoginModal({
   const [mounted, setMounted] = useState(false);
   const [view, setView] = useState<View>("login");
   const [knownPhone, setKnownPhone] = useState("");
+  const [registeredAccount, setRegisteredAccount] =
+    useState<LoggedInAccount | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  // The session is already live once registration succeeds — dismissing any
+  // other way than "Start shopping" must not lose that fact for the header.
+  function dismiss() {
+    if (registeredAccount) onLoggedIn(registeredAccount);
+    else onClose();
+  }
   useEffect(() => setMounted(true), []);
 
   // Always reopen on the login step, never mid-registration.
@@ -35,6 +45,8 @@ export default function LoginModal({
     if (open) {
       setView("login");
       setKnownPhone("");
+      setRegisteredAccount(null);
+      setCopied(false);
     }
   }, [open]);
 
@@ -43,19 +55,21 @@ export default function LoginModal({
     request: "Request your code",
     notFound: "Not registered",
     register: "Register",
+    registered: "You're all set!",
   };
   const subtitles: Record<View, string> = {
     login: "Use the business code we sent you on WhatsApp.",
     request: "We'll WhatsApp your code to the number we have on file.",
     notFound: "",
     register: "Takes a minute. We'll send your business code on WhatsApp.",
+    registered: "",
   };
 
   // Escape to dismiss, and hold the page still behind the dialog.
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") dismiss();
     };
     document.addEventListener("keydown", onKey);
     const prev = document.body.style.overflow;
@@ -64,7 +78,10 @@ export default function LoginModal({
       document.removeEventListener("keydown", onKey);
       document.body.style.overflow = prev;
     };
-  }, [open, onClose]);
+    // Re-subscribes whenever dismiss's behaviour actually changes, so Escape
+    // pressed right after a successful registration still carries the new
+    // session into the header instead of calling a stale onClose.
+  }, [open, registeredAccount, onLoggedIn, onClose]);
 
   if (!open || !mounted) return null;
 
@@ -73,7 +90,7 @@ export default function LoginModal({
       role="dialog"
       aria-modal="true"
       aria-labelledby="nn-login-title"
-      onClick={onClose}
+      onClick={dismiss}
       className="fixed inset-0 z-[100] flex items-center justify-center bg-ink/50 backdrop-blur-md p-4 animate-[fadeIn_120ms_ease-out]"
     >
       <div
@@ -83,7 +100,7 @@ export default function LoginModal({
         <button
           type="button"
           aria-label="Close"
-          onClick={onClose}
+          onClick={dismiss}
           className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full text-ink-soft transition-colors hover:bg-cream-2 hover:text-ink"
         >
           <svg
@@ -169,8 +186,13 @@ export default function LoginModal({
             <>
               <RegisterForm
                 initialPhone={knownPhone}
-                onRegistered={(a) =>
-                  onLoggedIn({
+                onRegistered={(a) => {
+                  // The server already opened the session on this request —
+                  // this screen's only job is to make sure the customer
+                  // actually sees their ID before it scrolls away. It is the
+                  // one place they see it until business_id_request clears
+                  // Meta and can WhatsApp it to them too.
+                  setRegisteredAccount({
                     accountName: a.accountName,
                     code: a.code,
                     address: null,
@@ -179,8 +201,9 @@ export default function LoginModal({
                     gstinLegalName: null,
                     gstinTradeName: null,
                     gstinStatus: null,
-                  })
-                }
+                  });
+                  setView("registered");
+                }}
               />
               <button
                 type="button"
@@ -190,6 +213,56 @@ export default function LoginModal({
                 I already have a code
               </button>
             </>
+          )}
+
+          {view === "registered" && registeredAccount && (
+            <div className="text-center">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-leaf/15 text-2xl">
+                ✓
+              </div>
+              <p className="mt-3 text-sm text-ink-soft">
+                Welcome{registeredAccount.accountName
+                  ? `, ${registeredAccount.accountName}`
+                  : ""}
+                ! Here is your Business ID.
+              </p>
+
+              <div className="mt-4 rounded-xl border-2 border-dashed border-terra/40 bg-terra/5 px-4 py-4">
+                <p className="text-xs font-semibold uppercase tracking-wide text-ink-soft">
+                  Your Business ID
+                </p>
+                <p className="mt-1 font-mono text-2xl font-bold tracking-wider text-ink">
+                  {registeredAccount.code}
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  navigator.clipboard
+                    ?.writeText(registeredAccount.code)
+                    .then(() => setCopied(true))
+                    .catch(() => {});
+                }}
+                className="mt-3 h-11 w-full rounded-full border border-line text-sm font-semibold text-ink hover:bg-cream-2"
+              >
+                {copied ? "Copied ✓" : "Copy ID"}
+              </button>
+
+              <p className="mt-3 text-xs text-ink-soft">
+                Save this somewhere safe — you&apos;ll use it to log in and
+                track orders next time. You can also request it again anytime
+                from the login screen.
+              </p>
+
+              <button
+                type="button"
+                onClick={() => onLoggedIn(registeredAccount)}
+                className="mt-4 h-12 w-full rounded-full bg-terra font-semibold text-cream hover:bg-terra-dark"
+              >
+                Start shopping
+              </button>
+            </div>
           )}
         </div>
       </div>

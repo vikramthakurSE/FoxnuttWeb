@@ -8,6 +8,7 @@ import { useCart } from "@/components/CartProvider";
 import BusinessCodeLogin, {
   type LoggedInAccount,
 } from "@/components/BusinessCodeLogin";
+import GstinVerify, { type GstinVerifyResult } from "@/components/GstinVerify";
 
 type Step = "identify" | "details" | "done";
 
@@ -35,6 +36,12 @@ export default function CheckoutPage() {
   const [gstin, setGstin] = useState("");
   const [note, setNote] = useState("");
 
+  // GSTIN verification: only genuinely new accounts (no business code) are
+  // gated — anyone with a code is an existing, already-known business.
+  const [gstinVerified, setGstinVerified] = useState(false);
+  const [gstinLegalName, setGstinLegalName] = useState<string | null>(null);
+  const [gstinResolution, setGstinResolution] = useState<GstinVerifyResult | null>(null);
+
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [placed, setPlaced] = useState<PlacedOrder | null>(null);
@@ -49,6 +56,10 @@ export default function CheckoutPage() {
           setCode((d.session.code as string) ?? null);
           setAccountName((d.session.accountName as string) ?? null);
           if (d.session.name) setName(d.session.name as string);
+          if (d.session.gstinVerified) {
+            setGstinVerified(true);
+            setGstinLegalName((d.session.gstinLegalName as string) ?? null);
+          }
           setStep((s) => (s === "identify" ? "details" : s));
         }
       })
@@ -79,6 +90,11 @@ export default function CheckoutPage() {
     0
   );
 
+  // First-time buyers must attempt GSTIN verification (pass or soft-fail)
+  // before they can place an order; existing business-code accounts never
+  // hit this gate.
+  const gstinBlocking = firstTime && !gstinResolution;
+
   async function submitOrder() {
     setBusy(true);
     setError(null);
@@ -93,7 +109,8 @@ export default function CheckoutPage() {
           name,
           businessName,
           address,
-          gstin,
+          gstin: firstTime ? gstinResolution?.gstin ?? "" : gstin,
+          gstinVerified: firstTime ? Boolean(gstinResolution?.verified) : gstinVerified,
           note,
         }),
       });
@@ -182,6 +199,10 @@ export default function CheckoutPage() {
                   if (a.accountName) setName(a.accountName);
                   if (a.address) setAddress(a.address);
                   if (a.gstin) setGstin(a.gstin);
+                  if (a.gstinVerified) {
+                    setGstinVerified(true);
+                    setGstinLegalName(a.gstinLegalName);
+                  }
                   setStep("details");
                 }}
               />
@@ -314,16 +335,27 @@ export default function CheckoutPage() {
             className="mt-1.5 w-full rounded-xl border border-line bg-card px-4 py-3 outline-none focus:border-terra"
           />
 
-          <label className="mt-4 block text-sm font-semibold" htmlFor="nn-gstin">
-            GSTIN (optional)
-          </label>
-          <input
-            id="nn-gstin"
-            value={gstin}
-            onChange={(e) => setGstin(e.target.value.toUpperCase())}
-            maxLength={15}
-            className="mt-1.5 h-12 w-full rounded-xl border border-line bg-card px-4 outline-none focus:border-terra"
-          />
+          {firstTime ? (
+            <GstinVerify phone={typedPhone} onResolved={setGstinResolution} />
+          ) : gstinVerified && gstinLegalName ? (
+            <div className="mt-4 rounded-xl border border-leaf/40 bg-leaf/10 px-4 py-3 text-sm">
+              <p className="font-semibold text-ink">✓ GST-verified business</p>
+              <p className="mt-1 text-ink-soft">{gstinLegalName}</p>
+            </div>
+          ) : (
+            <>
+              <label className="mt-4 block text-sm font-semibold" htmlFor="nn-gstin">
+                GSTIN (optional)
+              </label>
+              <input
+                id="nn-gstin"
+                value={gstin}
+                onChange={(e) => setGstin(e.target.value.toUpperCase())}
+                maxLength={15}
+                className="mt-1.5 h-12 w-full rounded-xl border border-line bg-card px-4 outline-none focus:border-terra"
+              />
+            </>
+          )}
 
           <label className="mt-4 block text-sm font-semibold" htmlFor="nn-note">
             Note for us (optional)
@@ -344,11 +376,16 @@ export default function CheckoutPage() {
 
           <button
             type="submit"
-            disabled={busy}
+            disabled={busy || gstinBlocking}
             className="mt-5 h-12 w-full rounded-full bg-terra font-semibold text-cream hover:bg-terra-dark disabled:opacity-50"
           >
             {busy ? "Placing order…" : `Place order · ${formatINR(total)}`}
           </button>
+          {gstinBlocking && (
+            <p className="mt-2 text-center text-xs font-semibold text-terra">
+              Verify your GSTIN above to continue.
+            </p>
+          )}
           <p className="mt-2 text-center text-xs text-ink-soft">
             Payment on delivery / as agreed. No online payment needed.
           </p>

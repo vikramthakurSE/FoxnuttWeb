@@ -60,6 +60,16 @@ export default async function HomePage() {
         <p className="mt-5 text-xs text-ink-soft">
           100% natural · no additives · FSSAI registered
         </p>
+        <div className="mx-auto mt-6 max-w-lg rounded-2xl border border-gold/40 bg-gold/10 px-5 py-4 text-sm">
+          <p className="font-semibold text-ink">
+            Open for business-to-business ordering
+          </p>
+          <p className="mt-1 text-ink-soft">
+            Our brands are available for B2B — every price shown here is a
+            wholesale rate. New business accounts verify their GSTIN at
+            checkout before their first order.
+          </p>
+        </div>
       </section>
 
       {/* Featured products */}

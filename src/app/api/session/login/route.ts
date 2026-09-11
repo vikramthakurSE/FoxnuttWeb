@@ -45,6 +45,10 @@ export async function POST(req: NextRequest) {
 
     // Mirror the account into the local table so checkout can prefill even
     // if Salesforce is briefly unreachable later.
+    let gstinVerified = false;
+    let gstinLegalName: string | null = null;
+    let gstinTradeName: string | null = null;
+    let gstinStatus: string | null = null;
     if (hasDb()) {
       try {
         await sql()`
@@ -57,6 +61,26 @@ export async function POST(req: NextRequest) {
             address       = COALESCE(customers.address, EXCLUDED.address),
             gstin         = COALESCE(customers.gstin, EXCLUDED.gstin)
         `;
+        // Grandfathered or previously-verified accounts carry gstin_verified
+        // = true — the checkout page uses this to decide whether to show
+        // the GSTIN verification gate at all.
+        const [row] = await sql()<
+          {
+            gstin_verified: boolean;
+            gstin_legal_name: string | null;
+            gstin_trade_name: string | null;
+            gstin_status: string | null;
+          }[]
+        >`
+          SELECT gstin_verified, gstin_legal_name, gstin_trade_name, gstin_status
+          FROM customers WHERE phone = ${found.phone}
+        `;
+        if (row) {
+          gstinVerified = row.gstin_verified;
+          gstinLegalName = row.gstin_legal_name;
+          gstinTradeName = row.gstin_trade_name;
+          gstinStatus = row.gstin_status;
+        }
       } catch (e) {
         console.error("session/login: customer mirror failed:", e);
       }
@@ -68,6 +92,10 @@ export async function POST(req: NextRequest) {
       code: found.code ?? clean,
       address: found.address ?? null,
       gstin: found.gstin ?? null,
+      gstinVerified,
+      gstinLegalName,
+      gstinTradeName,
+      gstinStatus,
     });
   } catch (e) {
     console.error("session/login failed:", e);

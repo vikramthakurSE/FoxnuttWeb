@@ -175,6 +175,10 @@ export default function LoginModal({
                     code: a.code,
                     address: null,
                     gstin: null,
+                    gstinVerified: false,
+                    gstinLegalName: null,
+                    gstinTradeName: null,
+                    gstinStatus: null,
                   })
                 }
               />

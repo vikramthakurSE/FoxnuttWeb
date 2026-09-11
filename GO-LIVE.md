@@ -78,7 +78,31 @@ That's your `DATABASE_URL`.
 
 ---
 
-## 4. Salesforce Connected App
+## 4. Cashfree Verification Suite (GSTIN check)
+
+First-time B2B buyers verify their GSTIN at checkout before ordering.
+Existing clients (anyone with a business code) are never asked.
+
+1. cashfree.com → sign up → **Verification Suite** → this is behind a
+   sales conversation, not self-serve, so expect to talk to someone
+   before you get real API keys. Ask specifically for **GSTIN
+   Verification** access.
+2. Once approved: Dashboard → Verification Suite → API Keys → copy the
+   Client ID and Client Secret.
+3. Run the new migration against your live database: Supabase →
+   SQL Editor → paste `db/migrations/001_gstin_verification.sql` → Run.
+   (This also grandfathers every existing customer row so only brand-new
+   accounts are ever asked for a GSTIN.)
+
+> Until you have real keys, leave `CASHFREE_CLIENT_ID` /
+> `CASHFREE_CLIENT_SECRET` unset. The site still works — GSTIN checks
+> just always come back "couldn't verify," which is a soft block: the
+> order still goes through, flagged for you to review manually, same as
+> every other first-time order today.
+
+---
+
+## 5. Salesforce Connected App
 
 Setup → App Manager → **New Connected App** → *Create a Connected App*:
 
@@ -111,7 +135,7 @@ you a verification code) → copy:
 
 ---
 
-## 5. Deploy to Vercel
+## 6. Deploy to Vercel
 
 ```bash
 cd ~/Desktop/nutty-nirvana-web
@@ -124,9 +148,11 @@ these for Production:
 
 ```
 DATABASE_URL        (from step 3)
+CASHFREE_CLIENT_ID      (from step 4 — leave blank until you have real keys)
+CASHFREE_CLIENT_SECRET  (from step 4 — leave blank until you have real keys)
 SF_INSTANCE_URL     https://nirvanachores-dev-ed.develop.my.salesforce.com
-SF_CLIENT_ID        (from step 4)
-SF_CLIENT_SECRET    (from step 4)
+SF_CLIENT_ID        (from step 5)
+SF_CLIENT_SECRET    (from step 5)
 WA_ACCESS_TOKEN     (from WhatsApp Config in Salesforce)
 WA_PHONE_NUMBER_ID  (from WhatsApp Config in Salesforce)
 WA_OTP_TEMPLATE     nn_login_code
@@ -143,7 +169,7 @@ Redeploy after adding them (Vercel → Deployments → ⋯ → Redeploy).
 
 ---
 
-## 6. Smoke test on the live site
+## 7. Smoke test on the live site
 
 1. Open the Vercel URL on your phone.
 2. Order one cheap item using **your own number** (`7277474053`) —
@@ -156,10 +182,15 @@ Redeploy after adding them (Vercel → Deployments → ⋯ → Redeploy).
    Salesforce and confirm the WhatsApp then fires.
 5. Delete both test sales (deleting a non-Delivered sale doesn't touch
    inventory).
+6. Order once more as a brand-new number using **Continue without a
+   code** — you should be asked for a GSTIN with a **Verify** button
+   before you can place the order. Try a real, active GSTIN (verifies
+   green) and a made-up one (soft-fails, order still goes through,
+   flagged in the Sale's Notes/Remarks).
 
 ---
 
-## 7. Domain and launch
+## 8. Domain and launch
 
 - Vercel → Settings → Domains → add your domain, or just use the
   `*.vercel.app` URL.

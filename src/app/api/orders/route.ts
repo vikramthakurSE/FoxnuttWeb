@@ -25,6 +25,8 @@ interface OrderBody {
   businessName?: string;
   address: string;
   gstin?: string;
+  /** Only meaningful for first-time buyers — see GstinVerify. */
+  gstinVerified?: boolean;
   note?: string;
   /** Existing client, logged in with their code. */
   businessCode?: string;
@@ -122,6 +124,19 @@ export async function POST(req: NextRequest) {
     total += (p.pricePerKg * p.packSizeGrams * item.packets) / 1000;
   }
 
+  // A GSTIN that wasn't cleanly auto-verified is a soft block, not a hard
+  // one — the order still goes through, flagged in the note so whoever
+  // reviews new customers (already standard practice) knows to double-check.
+  const gstinFlagged = Boolean(body.gstin?.trim()) && !body.gstinVerified;
+  const noteText = [
+    gstinFlagged
+      ? "[GSTIN not auto-verified — confirm business details before approving]"
+      : null,
+    body.note?.trim() || null,
+  ]
+    .filter(Boolean)
+    .join(" ");
+
   const orderId = randomUUID();
   const payload = {
     items: body.items,
@@ -129,7 +144,7 @@ export async function POST(req: NextRequest) {
     businessName: body.businessName?.trim() || null,
     address: body.address.trim(),
     gstin: body.gstin?.trim() || null,
-    note: body.note?.trim() || null,
+    note: noteText || null,
     // Retries must resolve the same account, so remember how this order
     // identified itself rather than falling back to a phone match.
     businessCode,

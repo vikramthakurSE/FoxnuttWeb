@@ -12,7 +12,16 @@ create table if not exists customers (
   gstin         text,
   sf_account_id text,
   created_at    timestamptz not null default now(),
-  last_order_at timestamptz
+  last_order_at timestamptz,
+  -- GSTIN verification (Cashfree Verification Suite) — see
+  -- db/migrations/001_gstin_verification.sql for the ALTER TABLE version
+  -- that brings an already-live database up to date.
+  gstin_verified    boolean not null default false,
+  gstin_status      text,          -- Active | Cancelled | Suspended | ...
+  gstin_legal_name  text,
+  gstin_trade_name  text,
+  gstin_address     jsonb,
+  gstin_verified_at timestamptz
 );
 
 create table if not exists otp_codes (

@@ -7,6 +7,10 @@ export interface LoggedInAccount {
   code: string;
   address: string | null;
   gstin: string | null;
+  gstinVerified: boolean;
+  gstinLegalName: string | null;
+  gstinTradeName: string | null;
+  gstinStatus: string | null;
 }
 
 /**
@@ -40,6 +44,10 @@ export default function BusinessCodeLogin({
         code: json.code,
         address: json.address ?? null,
         gstin: json.gstin ?? null,
+        gstinVerified: Boolean(json.gstinVerified),
+        gstinLegalName: json.gstinLegalName ?? null,
+        gstinTradeName: json.gstinTradeName ?? null,
+        gstinStatus: json.gstinStatus ?? null,
       });
     } catch (e) {
       setError(e instanceof Error ? e.message : "Something went wrong.");

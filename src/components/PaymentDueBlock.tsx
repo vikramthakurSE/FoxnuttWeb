@@ -30,14 +30,18 @@ export default function PaymentDueBlock({
   const [paid, setPaid] = useState(false);
   const [qrMissing, setQrMissing] = useState(false);
 
-  const vpa = process.env.NEXT_PUBLIC_UPI_VPA;
-  const payee = process.env.NEXT_PUBLIC_UPI_PAYEE ?? "Nutty Nirvana";
+  // Defaults decoded from the PhonePe QR in public/pay; env vars override
+  // them if the account ever changes.
+  const vpa = process.env.NEXT_PUBLIC_UPI_VPA || "9620405311-4@ybl";
+  const payee = process.env.NEXT_PUBLIC_UPI_PAYEE || "VIKRAM KUMAR";
   const orderNames = due.overdue.map((o) => o.saleName).join(", ");
-  const upiLink = vpa
-    ? `upi://pay?pa=${encodeURIComponent(vpa)}&pn=${encodeURIComponent(payee)}` +
-      `&am=${due.totalDue.toFixed(2)}&cu=INR` +
-      `&tn=${encodeURIComponent(`Nutty Nirvana ${orderNames}`.slice(0, 50))}`
-    : null;
+  // Amount and order number are pre-filled, so on a phone the customer
+  // taps once and confirms in their UPI app. The remark is kept short
+  // because Axis truncates it in the credit alert anyway.
+  const upiLink =
+    `upi://pay?pa=${encodeURIComponent(vpa)}&pn=${encodeURIComponent(payee)}` +
+    `&am=${due.totalDue.toFixed(2)}&cu=INR` +
+    `&tn=${encodeURIComponent(orderNames.slice(0, 40))}`;
 
   async function recheck() {
     setChecking(true);
@@ -162,14 +166,15 @@ export default function PaymentDueBlock({
             with you on WhatsApp.
           </p>
         )}
-        {upiLink && (
-          <a
-            href={upiLink}
-            className="mt-3 inline-flex h-11 items-center justify-center rounded-full bg-terra px-6 text-sm font-semibold text-cream hover:bg-terra-dark"
-          >
-            Pay {formatINR(due.totalDue)} in UPI app
-          </a>
-        )}
+        <a
+          href={upiLink}
+          className="mt-3 inline-flex h-11 items-center justify-center rounded-full bg-terra px-6 text-sm font-semibold text-cream hover:bg-terra-dark"
+        >
+          Pay {formatINR(due.totalDue)} in UPI app
+        </a>
+        <p className="mt-1 text-[11px] text-ink-soft">
+          Works on phones with a UPI app installed
+        </p>
         <p className="mt-3 text-xs text-ink-soft">
           Please mention your order number ({orderNames}) in the payment
           remark. You will get a WhatsApp confirmation once we record it.

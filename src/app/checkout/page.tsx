@@ -53,22 +53,29 @@ export default function CheckoutPage() {
   // Ask early, as soon as we know the code, so the customer does not fill
   // in the whole form before learning they must pay first. The order POST
   // enforces the same rule server-side; this is only the heads-up.
-  const checkDue = useCallback(async (): Promise<boolean> => {
+  const fetchDue = useCallback(async (): Promise<SfPaymentDue | null> => {
     try {
       const res = await fetch("/api/payment-due", { cache: "no-store" });
-      if (!res.ok) return true;
-      const d = (await res.json()) as SfPaymentDue;
-      const blocked = d.overdue.length > 0;
-      setDue(blocked ? d : null);
-      return !blocked;
+      if (!res.ok) return null;
+      return (await res.json()) as SfPaymentDue;
     } catch {
-      return true;
+      return null;
     }
   }, []);
 
   useEffect(() => {
-    if (code) void checkDue();
-  }, [code, checkDue]);
+    if (!code) return;
+    void fetchDue().then((d) => {
+      if (d && d.overdue.length > 0) setDue(d);
+    });
+  }, [code, fetchDue]);
+
+  // Recheck from the pay-first panel. Only reports; the panel decides when
+  // to hand back to the form so it can show its "payment received" screen.
+  const recheckDue = useCallback(async (): Promise<boolean> => {
+    const d = await fetchDue();
+    return d !== null && d.overdue.length === 0;
+  }, [fetchDue]);
 
   // Already logged in with a business code in this browser? Skip ahead.
   useEffect(() => {
@@ -302,7 +309,11 @@ export default function CheckoutPage() {
 
       {/* Pay-first gate — an old delivery is still unpaid */}
       {step === "details" && due && (
-        <PaymentDueBlock due={due} onRecheck={checkDue} />
+        <PaymentDueBlock
+          due={due}
+          onRecheck={recheckDue}
+          onCleared={() => setDue(null)}
+        />
       )}
 
       {/* Step 2 — details + place order */}

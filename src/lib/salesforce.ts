@@ -115,6 +115,44 @@ export interface SfPastOrder {
 /** Thrown for 4xx business errors from Apex (safe to show to the user). */
 export class SalesforceUserError extends Error {}
 
+/** A delivered order still unpaid past the Salesforce OVERDUE_DAYS limit. */
+export interface SfOverdueSale {
+  saleId: string;
+  saleName: string;
+  saleDate: string;
+  total: number | null;
+  balanceDue: number;
+  daysOld: number;
+}
+
+export interface SfPaymentDue {
+  overdue: SfOverdueSale[];
+  totalDue: number;
+  daysLimit: number;
+}
+
+/**
+ * Salesforce refused the order (HTTP 402) because the client owes on an
+ * old delivery. Carries the orders so checkout can show what to pay.
+ */
+export class SalesforcePaymentDueError extends SalesforceUserError {
+  constructor(message: string, public readonly due: SfPaymentDue) {
+    super(message);
+  }
+}
+
+async function readPaymentDue(res: Response): Promise<SalesforcePaymentDueError> {
+  const json = (await res.json()) as Partial<SfPaymentDue> & { error?: string };
+  return new SalesforcePaymentDueError(
+    json.error ?? "Please clear your pending payment before ordering again.",
+    {
+      overdue: json.overdue ?? [],
+      totalDue: Number(json.totalDue ?? 0),
+      daysLimit: Number(json.daysLimit ?? 45),
+    }
+  );
+}
+
 export function sfConfigured(): boolean {
   return Boolean(
     process.env.SF_INSTANCE_URL &&
@@ -209,10 +247,25 @@ export async function placeOrder(input: SfOrderInput): Promise<SfOrderResult> {
     method: "POST",
     body: JSON.stringify(input),
   });
+  if (res.status === 402) throw await readPaymentDue(res);
   if (res.status === 400) throw new SalesforceUserError(await readError(res));
   if (!res.ok) throw new Error(await readError(res));
   const json = (await res.json()) as { order: SfOrderResult };
   return json.order;
+}
+
+/** Old unpaid orders that stop this business code from ordering. */
+export async function fetchPaymentDue(code: string): Promise<SfPaymentDue> {
+  const res = await sfFetch(
+    `/store/v1/payment-due?code=${encodeURIComponent(code)}`
+  );
+  if (!res.ok) throw new Error(await readError(res));
+  const json = (await res.json()) as Partial<SfPaymentDue>;
+  return {
+    overdue: json.overdue ?? [],
+    totalDue: Number(json.totalDue ?? 0),
+    daysLimit: Number(json.daysLimit ?? 45),
+  };
 }
 
 export interface SfCodeLookup {

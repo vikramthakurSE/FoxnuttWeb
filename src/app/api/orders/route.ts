@@ -9,6 +9,7 @@ import {
   fetchOrders,
   sfConfigured,
   SalesforceUserError,
+  SalesforcePaymentDueError,
 } from "@/lib/salesforce";
 import { isDemo, demoStore, nextSaleName } from "@/lib/demo";
 
@@ -268,6 +269,15 @@ export async function POST(req: NextRequest) {
       total,
     });
   } catch (e) {
+    if (e instanceof SalesforcePaymentDueError) {
+      // Pay-first block. Nothing to retry, so the local row goes too, and
+      // the 402 carries the orders so checkout can show the payment panel.
+      await db`DELETE FROM orders WHERE id = ${orderId}`;
+      return NextResponse.json(
+        { error: e.message, code: "PAYMENT_OVERDUE", ...e.due },
+        { status: 402 }
+      );
+    }
     if (e instanceof SalesforceUserError) {
       // Business rejection (e.g. out of stock) — drop the local row too
       await db`DELETE FROM orders WHERE id = ${orderId}`;

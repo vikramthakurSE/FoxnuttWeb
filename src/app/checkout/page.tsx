@@ -1,14 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import type { SfProduct } from "@/lib/salesforce";
+import { useCallback, useEffect, useState } from "react";
+import type { SfPaymentDue, SfProduct } from "@/lib/salesforce";
 import { formatINR } from "@/lib/format";
 import { useCart } from "@/components/CartProvider";
 import BusinessCodeLogin, {
   type LoggedInAccount,
 } from "@/components/BusinessCodeLogin";
 import GstinVerify, { type GstinVerifyResult } from "@/components/GstinVerify";
+import PaymentDueBlock from "@/components/PaymentDueBlock";
 
 type Step = "identify" | "details" | "done";
 
@@ -45,6 +46,29 @@ export default function CheckoutPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [placed, setPlaced] = useState<PlacedOrder | null>(null);
+  // Set when Salesforce says an old delivery is still unpaid: the form is
+  // replaced by the pay-first panel until a recheck comes back clear.
+  const [due, setDue] = useState<SfPaymentDue | null>(null);
+
+  // Ask early, as soon as we know the code, so the customer does not fill
+  // in the whole form before learning they must pay first. The order POST
+  // enforces the same rule server-side; this is only the heads-up.
+  const checkDue = useCallback(async (): Promise<boolean> => {
+    try {
+      const res = await fetch("/api/payment-due", { cache: "no-store" });
+      if (!res.ok) return true;
+      const d = (await res.json()) as SfPaymentDue;
+      const blocked = d.overdue.length > 0;
+      setDue(blocked ? d : null);
+      return !blocked;
+    } catch {
+      return true;
+    }
+  }, []);
+
+  useEffect(() => {
+    if (code) void checkDue();
+  }, [code, checkDue]);
 
   // Already logged in with a business code in this browser? Skip ahead.
   useEffect(() => {
@@ -115,6 +139,11 @@ export default function CheckoutPage() {
         }),
       });
       const json = await res.json();
+      if (res.status === 402 && json.code === "PAYMENT_OVERDUE") {
+        setDue(json as SfPaymentDue);
+        window.scrollTo({ top: 0 });
+        return;
+      }
       if (!res.ok) throw new Error(json.error ?? "Could not place the order.");
       setPlaced({
         saleName: json.saleName,
@@ -271,8 +300,13 @@ export default function CheckoutPage() {
         </div>
       )}
 
+      {/* Pay-first gate — an old delivery is still unpaid */}
+      {step === "details" && due && (
+        <PaymentDueBlock due={due} onRecheck={checkDue} />
+      )}
+
       {/* Step 2 — details + place order */}
-      {step === "details" && (
+      {step === "details" && !due && (
         <form
           className="mt-6 rounded-2xl bg-card border border-line shadow-card p-5"
           onSubmit={(e) => {

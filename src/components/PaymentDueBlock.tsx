@@ -29,6 +29,7 @@ export default function PaymentDueBlock({
   const [stillDue, setStillDue] = useState(false);
   const [paid, setPaid] = useState(false);
   const [qrMissing, setQrMissing] = useState(false);
+  const [copied, setCopied] = useState(false);
   // Guards against overlapping checks when a manual click lands while the
   // background poll is mid-flight.
   const inFlight = useRef(false);
@@ -86,23 +87,20 @@ export default function PaymentDueBlock({
   const vpa = process.env.NEXT_PUBLIC_UPI_VPA || "9620405311-4@ybl";
   const payee = process.env.NEXT_PUBLIC_UPI_PAYEE || "VIKRAM KUMAR";
   const orderNames = due.overdue.map((o) => o.saleName).join(", ");
-  // Amount and order number are pre-filled, so on a phone the customer
-  // taps once and confirms in their UPI app. The remark is kept short
-  // because Axis truncates it in the credit alert anyway.
-  const upiQuery =
-    `pa=${encodeURIComponent(vpa)}&pn=${encodeURIComponent(payee)}` +
-    `&am=${due.totalDue.toFixed(2)}&cu=INR` +
-    `&tn=${encodeURIComponent(orderNames.slice(0, 40))}`;
-  // A bare upi:// link goes to whichever app the phone has made the
-  // default for UPI links (often WhatsApp), with no chooser on iOS at all.
-  // Each app also registers its own scheme, so offering them by name lets
-  // the customer pick here and bypasses the OS default entirely.
-  const upiApps: { name: string; href: string; bg: string }[] = [
-    { name: "PhonePe", href: `phonepe://pay?${upiQuery}`, bg: "bg-[#5f259f]" },
-    { name: "Google Pay", href: `tez://upi/pay?${upiQuery}`, bg: "bg-[#1a73e8]" },
-    { name: "Paytm", href: `paytmmp://pay?${upiQuery}`, bg: "bg-[#00b9f1]" },
-    { name: "Other UPI app", href: `upi://pay?${upiQuery}`, bg: "bg-terra" },
-  ];
+  // No deep links: UPI apps decline upi:// / app-scheme intents that point
+  // at a personal (non-merchant) UPI ID "for security reasons". Only a
+  // registered merchant VPA can be paid through an intent, so until there
+  // is one, the customer pays by scanning the QR or by pasting the ID into
+  // their app's "Pay to UPI ID" screen.
+  async function copyUpiId() {
+    try {
+      await navigator.clipboard.writeText(vpa);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2500);
+    } catch {
+      // Clipboard blocked (http, old browser): the ID is on screen anyway.
+    }
+  }
 
   async function recheck() {
     if (inFlight.current) return;
@@ -231,23 +229,26 @@ export default function PaymentDueBlock({
             with you on WhatsApp.
           </p>
         )}
-        <p className="mt-4 text-sm font-semibold">
-          Or pay {formatINR(due.totalDue)} with
-        </p>
-        <div className="mt-2 grid grid-cols-2 gap-2">
-          {upiApps.map((app) => (
-            <a
-              key={app.name}
-              href={app.href}
-              className={`inline-flex h-11 items-center justify-center rounded-full px-3 text-sm font-semibold text-white hover:opacity-90 ${app.bg}`}
+        <div className="mt-4 rounded-xl border border-line bg-card px-4 py-3 text-left">
+          <p className="text-xs font-semibold text-ink-soft">
+            On this phone? Pay to our UPI ID instead
+          </p>
+          <div className="mt-1.5 flex items-center justify-between gap-3">
+            <span className="font-mono text-sm font-semibold break-all">{vpa}</span>
+            <button
+              type="button"
+              onClick={() => void copyUpiId()}
+              className="h-9 shrink-0 rounded-full bg-terra px-4 text-xs font-semibold text-cream hover:bg-terra-dark"
             >
-              {app.name}
-            </a>
-          ))}
+              {copied ? "Copied ✓" : "Copy"}
+            </button>
+          </div>
+          <p className="mt-1.5 text-[11px] text-ink-soft">
+            {payee} · open PhonePe, Google Pay or Paytm, choose{" "}
+            <span className="font-semibold">Pay to UPI ID</span>, paste, and
+            enter {formatINR(due.totalDue)}.
+          </p>
         </div>
-        <p className="mt-1.5 text-[11px] text-ink-soft">
-          On a phone, this opens the app with the amount filled in
-        </p>
         <p className="mt-3 text-xs text-ink-soft">
           Please mention your order number ({orderNames}) in the payment
           remark. You will get a WhatsApp confirmation once we record it.

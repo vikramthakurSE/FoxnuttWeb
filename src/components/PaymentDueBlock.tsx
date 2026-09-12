@@ -89,10 +89,20 @@ export default function PaymentDueBlock({
   // Amount and order number are pre-filled, so on a phone the customer
   // taps once and confirms in their UPI app. The remark is kept short
   // because Axis truncates it in the credit alert anyway.
-  const upiLink =
-    `upi://pay?pa=${encodeURIComponent(vpa)}&pn=${encodeURIComponent(payee)}` +
+  const upiQuery =
+    `pa=${encodeURIComponent(vpa)}&pn=${encodeURIComponent(payee)}` +
     `&am=${due.totalDue.toFixed(2)}&cu=INR` +
     `&tn=${encodeURIComponent(orderNames.slice(0, 40))}`;
+  // A bare upi:// link goes to whichever app the phone has made the
+  // default for UPI links (often WhatsApp), with no chooser on iOS at all.
+  // Each app also registers its own scheme, so offering them by name lets
+  // the customer pick here and bypasses the OS default entirely.
+  const upiApps: { name: string; href: string; bg: string }[] = [
+    { name: "PhonePe", href: `phonepe://pay?${upiQuery}`, bg: "bg-[#5f259f]" },
+    { name: "Google Pay", href: `tez://upi/pay?${upiQuery}`, bg: "bg-[#1a73e8]" },
+    { name: "Paytm", href: `paytmmp://pay?${upiQuery}`, bg: "bg-[#00b9f1]" },
+    { name: "Other UPI app", href: `upi://pay?${upiQuery}`, bg: "bg-terra" },
+  ];
 
   async function recheck() {
     if (inFlight.current) return;
@@ -221,14 +231,22 @@ export default function PaymentDueBlock({
             with you on WhatsApp.
           </p>
         )}
-        <a
-          href={upiLink}
-          className="mt-3 inline-flex h-11 items-center justify-center rounded-full bg-terra px-6 text-sm font-semibold text-cream hover:bg-terra-dark"
-        >
-          Pay {formatINR(due.totalDue)} in UPI app
-        </a>
-        <p className="mt-1 text-[11px] text-ink-soft">
-          Works on phones with a UPI app installed
+        <p className="mt-4 text-sm font-semibold">
+          Or pay {formatINR(due.totalDue)} with
+        </p>
+        <div className="mt-2 grid grid-cols-2 gap-2">
+          {upiApps.map((app) => (
+            <a
+              key={app.name}
+              href={app.href}
+              className={`inline-flex h-11 items-center justify-center rounded-full px-3 text-sm font-semibold text-white hover:opacity-90 ${app.bg}`}
+            >
+              {app.name}
+            </a>
+          ))}
+        </div>
+        <p className="mt-1.5 text-[11px] text-ink-soft">
+          On a phone, this opens the app with the amount filled in
         </p>
         <p className="mt-3 text-xs text-ink-soft">
           Please mention your order number ({orderNames}) in the payment

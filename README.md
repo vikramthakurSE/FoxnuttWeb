@@ -38,6 +38,21 @@ Pending Approval sales do **not** block inventory in your app, but the
 website's availability math treats them as reserved so two web buyers
 can't claim the same stock.
 
+## Pay-first block for overdue payments
+
+A client whose **delivered** order is still unpaid **45 days** after its
+sale date cannot place a new order. Salesforce enforces it
+(`WebStoreService.OVERDUE_DAYS`; the order POST answers 402) and the
+website checks early via `/api/payment-due` as soon as a business code is
+known, so the checkout form is replaced by a "please clear your pending
+payment first" panel listing the orders, the total, and the PhonePe UPI
+QR. The block lifts by itself once a `Client_Payment__c` is recorded in
+Salesforce against that sale — the same record that already triggers the
+payment-received WhatsApp.
+
+Setup: put the QR image at `public/pay/phonepe-qr.png`; optionally set
+`NEXT_PUBLIC_UPI_VPA` for a one-tap "Pay in UPI app" button on phones.
+
 ## Managing the catalogue
 
 Products and prices live in Salesforce → App Launcher → **Web Products**.

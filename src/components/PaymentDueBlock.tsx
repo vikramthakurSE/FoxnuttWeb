@@ -250,7 +250,7 @@ export default function PaymentDueBlock({
           </p>
         </div>
         <p className="mt-3 text-xs text-ink-soft">
-          Please mention your order number ({orderNames}) in the payment
+          Optional: mention your order number ({orderNames}) in the payment
           remark. You will get a WhatsApp confirmation once we record it.
         </p>
       </div>

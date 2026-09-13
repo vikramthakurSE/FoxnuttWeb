@@ -4,6 +4,7 @@ import "./globals.css";
 import { CartProvider } from "@/components/CartProvider";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import NnCornerBadge from "@/components/NnMonogram";
 
 const fraunces = Fraunces({
   subsets: ["latin"],
@@ -41,6 +42,7 @@ export default function RootLayout({
           <Header />
           <main className="flex-1">{children}</main>
           <Footer />
+          <NnCornerBadge />
         </CartProvider>
       </body>
     </html>

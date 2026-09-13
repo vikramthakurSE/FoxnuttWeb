@@ -52,6 +52,15 @@ textarea {
   font-size: 16px; /* prevents iOS zoom on focus */
 }
 
+/* Tailwind's Preflight sets button { cursor: default } to match native
+   controls, which is why hovering Login (and every other <button>) showed
+   an ordinary arrow instead of a pointer. Every clickable button on the
+   site should read as clickable. */
+button:not(:disabled),
+[role="button"]:not([aria-disabled="true"]) {
+  cursor: pointer;
+}
+
 /* Login dialog fade-in */
 @keyframes fadeIn {
   from { opacity: 0; }

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { SfPaymentDue, SfProduct } from "@/lib/salesforce";
 import { formatINR } from "@/lib/format";
 import { useCart } from "@/components/CartProvider";
@@ -10,6 +10,7 @@ import BusinessAccountAccess from "@/components/BusinessAccountAccess";
 import GstinVerify, { type GstinVerifyResult } from "@/components/GstinVerify";
 import PaymentDueBlock from "@/components/PaymentDueBlock";
 import OnlinePaymentPanel from "@/components/OnlinePaymentPanel";
+import PlaceOrderButton, { type PlaceOrderButtonHandle } from "@/components/PlaceOrderButton";
 
 type Step = "identify" | "details" | "done";
 
@@ -49,6 +50,7 @@ export default function CheckoutPage() {
   const [gstinResolution, setGstinResolution] = useState<GstinVerifyResult | null>(null);
 
   const [busy, setBusy] = useState(false);
+  const placeOrderRef = useRef<PlaceOrderButtonHandle>(null);
   const [error, setError] = useState<string | null>(null);
   const [placed, setPlaced] = useState<PlacedOrder | null>(null);
   // Set when Salesforce says an old delivery is still unpaid: the form is
@@ -131,7 +133,13 @@ export default function CheckoutPage() {
   // hit this gate.
   const gstinBlocking = firstTime && !gstinResolution;
 
-  async function submitOrder() {
+  // Runs the real order placement. Resolves false for any handled outcome
+  // (a rejected order, a pay-first block) so the button's drive animation
+  // simply resets rather than showing a false "delivered" checkmark; the
+  // existing error/due UI already explains what happened. Only a genuine
+  // success — where the button's own checkmark animation gets to play
+  // out — goes on to swap in the confirmation screen, via finishOrder().
+  async function submitOrder(): Promise<boolean> {
     setBusy(true);
     setError(null);
     try {
@@ -155,7 +163,7 @@ export default function CheckoutPage() {
       if (res.status === 402 && json.code === "PAYMENT_OVERDUE") {
         setDue(json as SfPaymentDue);
         window.scrollTo({ top: 0 });
-        return;
+        return false;
       }
       if (!res.ok) throw new Error(json.error ?? "Could not place the order.");
       setPlaced({
@@ -166,14 +174,19 @@ export default function CheckoutPage() {
         total: json.total,
         paymentMethod: json.paymentMethod === "online" ? "online" : "cod",
       });
-      clear();
-      setStep("done");
-      window.scrollTo({ top: 0 });
+      return true;
     } catch (e) {
       setError(e instanceof Error ? e.message : "Something went wrong.");
+      return false;
     } finally {
       setBusy(false);
     }
+  }
+
+  function finishOrder() {
+    clear();
+    setStep("done");
+    window.scrollTo({ top: 0 });
   }
 
   // ── Empty cart guard ───────────────────────────────────────────────────
@@ -328,7 +341,7 @@ export default function CheckoutPage() {
           className="mt-6 rounded-2xl bg-card border border-line shadow-card p-5"
           onSubmit={(e) => {
             e.preventDefault();
-            void submitOrder();
+            if (!gstinBlocking) placeOrderRef.current?.trigger();
           }}
         >
           <h2 className="font-display text-xl font-bold">Delivery details</h2>
@@ -473,13 +486,13 @@ export default function CheckoutPage() {
             </p>
           )}
 
-          <button
-            type="submit"
-            disabled={busy || gstinBlocking}
-            className="mt-5 h-12 w-full rounded-full bg-terra font-semibold text-cream hover:bg-terra-dark disabled:opacity-50"
-          >
-            {busy ? "Placing order…" : `Place order · ${formatINR(total)}`}
-          </button>
+          <PlaceOrderButton
+            ref={placeOrderRef}
+            idleLabel={`Place order · ${formatINR(total)}`}
+            disabled={gstinBlocking}
+            onSubmit={submitOrder}
+            onSuccessShown={finishOrder}
+          />
           {gstinBlocking && (
             <p className="mt-2 text-center text-xs font-semibold text-terra">
               Verify your GSTIN above to continue.

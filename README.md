@@ -53,6 +53,17 @@ payment-received WhatsApp.
 Setup: put the QR image at `public/pay/phonepe-qr.png`; optionally set
 `NEXT_PUBLIC_UPI_VPA` for a one-tap "Pay in UPI app" button on phones.
 
+## Paying online at checkout
+
+Checkout offers **Pay online** (default) or **Cash on Delivery**. An online
+order is placed exactly like a COD one (Salesforce stores
+`Payment_Method__c = Online`), then the confirmation screen shows a trust
+note, the PhonePe QR and the UPI ID, and polls `/api/orders/payment?ref=`
+until the Axis credit alert books the payment in Salesforce. The page then
+plays the payment-received animation and the customer also gets the
+WhatsApp receipt. Unpaid online orders show a "Pay online now" button on
+the orders page that opens the same panel.
+
 ## Managing the catalogue
 
 Products and prices live in Salesforce → App Launcher → **Web Products**.

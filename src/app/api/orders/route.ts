@@ -33,6 +33,8 @@ interface OrderBody {
   businessCode?: string;
   /** First-time buyer with no code — they typed their own number. */
   phone?: string;
+  /** 'online' shows the UPI panel after placing; anything else is COD. */
+  paymentMethod?: string;
 }
 
 /** Strip to the last 10 digits, mirroring lib/session normalizePhone. */
@@ -138,8 +140,11 @@ export async function POST(req: NextRequest) {
     .filter(Boolean)
     .join(" ");
 
+  const paymentMethod: "online" | "cod" =
+    body.paymentMethod === "online" ? "online" : "cod";
   const orderId = randomUUID();
   const payload = {
+    paymentMethod,
     items: body.items,
     name: body.name.trim(),
     businessName: body.businessName?.trim() || null,
@@ -194,6 +199,7 @@ export async function POST(req: NextRequest) {
       status,
       newCustomer: !known,
       total,
+      paymentMethod,
     });
   }
 
@@ -235,6 +241,7 @@ export async function POST(req: NextRequest) {
       gstin: payload.gstin ?? undefined,
       note: payload.note ?? undefined,
       orderRef: orderId,
+      paymentMethod,
       items: body.items,
     });
     await db`
@@ -267,6 +274,7 @@ export async function POST(req: NextRequest) {
       status: result.status,
       newCustomer: result.newCustomer,
       total,
+      paymentMethod,
     });
   } catch (e) {
     if (e instanceof SalesforcePaymentDueError) {
@@ -299,6 +307,7 @@ export async function POST(req: NextRequest) {
       status: "Received",
       newCustomer: false,
       total,
+      paymentMethod,
     });
   }
 }

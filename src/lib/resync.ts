@@ -8,6 +8,7 @@ export interface OrderPayload {
   address: string;
   gstin: string | null;
   note: string | null;
+  paymentMethod?: "online" | "cod" | null;
   /** Present when an existing client ordered with their code. */
   businessCode?: string | null;
 }
@@ -46,6 +47,7 @@ export async function resyncFailedOrders(
         address: row.payload.address,
         gstin: row.payload.gstin ?? undefined,
         note: row.payload.note ?? undefined,
+        paymentMethod: row.payload.paymentMethod ?? undefined,
         orderRef: row.id,
         items: row.payload.items,
       });

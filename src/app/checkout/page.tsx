@@ -10,14 +10,19 @@ import BusinessCodeLogin, {
 } from "@/components/BusinessCodeLogin";
 import GstinVerify, { type GstinVerifyResult } from "@/components/GstinVerify";
 import PaymentDueBlock from "@/components/PaymentDueBlock";
+import OnlinePaymentPanel from "@/components/OnlinePaymentPanel";
 
 type Step = "identify" | "details" | "done";
 
+type PaymentMethod = "online" | "cod";
+
 interface PlacedOrder {
+  orderId: string;
   saleName: string | null;
   status: string;
   newCustomer: boolean;
   total: number;
+  paymentMethod: PaymentMethod;
 }
 
 export default function CheckoutPage() {
@@ -36,6 +41,7 @@ export default function CheckoutPage() {
   const [address, setAddress] = useState("");
   const [gstin, setGstin] = useState("");
   const [note, setNote] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("online");
 
   // GSTIN verification: only genuinely new accounts (no business code) are
   // gated — anyone with a code is an existing, already-known business.
@@ -143,6 +149,7 @@ export default function CheckoutPage() {
           gstin: firstTime ? gstinResolution?.gstin ?? "" : gstin,
           gstinVerified: firstTime ? Boolean(gstinResolution?.verified) : gstinVerified,
           note,
+          paymentMethod,
         }),
       });
       const json = await res.json();
@@ -153,10 +160,12 @@ export default function CheckoutPage() {
       }
       if (!res.ok) throw new Error(json.error ?? "Could not place the order.");
       setPlaced({
+        orderId: json.orderId,
         saleName: json.saleName,
         status: json.status,
         newCustomer: json.newCustomer,
         total: json.total,
+        paymentMethod: json.paymentMethod === "online" ? "online" : "cod",
       });
       clear();
       setStep("done");
@@ -413,6 +422,54 @@ export default function CheckoutPage() {
             className="mt-1.5 w-full rounded-xl border border-line bg-card px-4 py-3 outline-none focus:border-terra"
           />
 
+          <fieldset className="mt-5">
+            <legend className="block text-sm font-semibold">How would you like to pay?</legend>
+            <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
+              {(
+                [
+                  {
+                    id: "online" as const,
+                    title: "Pay online",
+                    body: "UPI now — scan our QR after placing the order. Nothing to pay on delivery.",
+                    icon: "📱",
+                  },
+                  {
+                    id: "cod" as const,
+                    title: "Cash on Delivery",
+                    body: "Pay when your order arrives, as agreed.",
+                    icon: "💵",
+                  },
+                ] as const
+              ).map((opt) => {
+                const active = paymentMethod === opt.id;
+                return (
+                  <label
+                    key={opt.id}
+                    className={`flex cursor-pointer gap-3 rounded-xl border px-4 py-3 text-sm transition-colors ${
+                      active
+                        ? "border-terra bg-terra/5 ring-1 ring-terra"
+                        : "border-line bg-card hover:bg-cream-2"
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="nn-pay"
+                      value={opt.id}
+                      checked={active}
+                      onChange={() => setPaymentMethod(opt.id)}
+                      className="sr-only"
+                    />
+                    <span className="text-xl" aria-hidden="true">{opt.icon}</span>
+                    <span>
+                      <span className="block font-semibold">{opt.title}</span>
+                      <span className="block text-xs text-ink-soft">{opt.body}</span>
+                    </span>
+                  </label>
+                );
+              })}
+            </div>
+          </fieldset>
+
           {error && (
             <p className="mt-4 rounded-xl bg-terra/10 border border-terra/30 px-4 py-2.5 text-sm text-terra-dark">
               {error}
@@ -432,13 +489,45 @@ export default function CheckoutPage() {
             </p>
           )}
           <p className="mt-2 text-center text-xs text-ink-soft">
-            Payment on delivery / as agreed. No online payment needed.
+            {paymentMethod === "online"
+              ? "You will see our UPI QR on the next screen."
+              : "Payment on delivery, as agreed."}
           </p>
         </form>
       )}
 
       {/* Step 3 — confirmation */}
-      {step === "done" && placed && (
+      {step === "done" && placed && placed.paymentMethod === "online" && (
+        <>
+          <div className="rounded-2xl bg-card border border-line shadow-card p-5 text-center">
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-leaf/15 text-2xl">
+              ✓
+            </div>
+            <h1 className="mt-3 font-display text-2xl font-bold">
+              {placed.status === "Confirmed" ? "Order confirmed!" : "Order received!"}
+            </h1>
+            {placed.saleName && (
+              <p className="mt-1 text-sm text-ink-soft">
+                Order number:{" "}
+                <span className="font-semibold text-ink">{placed.saleName}</span>
+              </p>
+            )}
+            {placed.status !== "Confirmed" && (
+              <p className="mt-2 text-xs text-ink-soft">
+                {placed.newCustomer
+                  ? "We have sent your business code on WhatsApp. One of our executives will confirm the details shortly."
+                  : "One of our executives will confirm the details shortly."}
+              </p>
+            )}
+          </div>
+          <OnlinePaymentPanel
+            orderRef={placed.orderId}
+            saleName={placed.saleName}
+            amount={placed.total}
+          />
+        </>
+      )}
+      {step === "done" && placed && placed.paymentMethod === "cod" && (
         <div className="rounded-2xl bg-card border border-line shadow-card p-6 text-center">
           <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-leaf/15 text-3xl">
             ✓

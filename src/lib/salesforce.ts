@@ -197,6 +197,15 @@ async function getToken(): Promise<string> {
   return json.access_token;
 }
 
+/**
+ * Like sfFetch, but exported for callers that need the raw Response (a
+ * binary body, non-JSON content type) rather than a parsed result — the
+ * PDF receipt proxy is the only current use.
+ */
+export async function sfFetchRaw(path: string, init?: RequestInit): Promise<Response> {
+  return sfFetch(path, init);
+}
+
 async function sfFetch(path: string, init?: RequestInit): Promise<Response> {
   const token = await getToken();
   const res = await fetch(

@@ -182,6 +182,22 @@ export default function OrdersPage() {
                 </span>
               </div>
 
+              {o.orderRef &&
+                o.status !== "Cancelled" &&
+                (o.balanceDue ?? 0) <= 0 &&
+                (o.collected ?? 0) > 0 && (
+                  <div className="mt-3 border-t border-line pt-3">
+                    <a
+                      href={`/api/orders/receipt?ref=${o.orderRef}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex h-11 w-full items-center justify-center gap-2 rounded-full border border-ink/20 text-sm font-semibold hover:bg-cream-2"
+                    >
+                      📄 Download receipt
+                    </a>
+                  </div>
+                )}
+
               {o.paymentMethod === "Online" &&
                 o.orderRef &&
                 o.status !== "Cancelled" &&

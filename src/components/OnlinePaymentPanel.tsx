@@ -53,8 +53,18 @@ export default function OnlinePaymentPanel({
           </>
         }
       >
+        <a
+          href={`/api/orders/receipt?ref=${orderRef}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={`rounded-full border border-ink/20 font-semibold hover:bg-cream-2 flex items-center justify-center gap-2 ${
+            compact ? "h-11 text-sm" : "h-12"
+          }`}
+        >
+          📄 Download receipt
+        </a>
         {!compact && (
-          <div className="flex flex-col gap-2">
+          <div className="mt-2 flex flex-col gap-2">
             <Link
               href="/orders"
               className="h-12 rounded-full bg-terra font-semibold text-cream hover:bg-terra-dark flex items-center justify-center"

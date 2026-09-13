@@ -162,3 +162,15 @@ profile / Instagram bio.
   like a sale you entered in Quick Sale.
 - **Out of stock** → the site greys the product out automatically based
   on live inventory minus active orders.
+
+## Downloadable PDF receipt
+
+Once an order is fully paid, `/api/orders/receipt?ref=<web order ref>`
+proxies the branded PDF receipt Salesforce renders (see FoxnuttApp's
+`PaymentReceiptPDF`). "Download receipt" appears on the online-payment
+success screen and, on the orders page, for any settled order — online or
+COD — that has a web order reference. This same URL is what the
+`payment_receipt` WhatsApp template fetches on Salesforce's side, so it
+needs no separate auth: the order reference is an unguessable UUID, same
+model as `/api/orders/payment`.
+

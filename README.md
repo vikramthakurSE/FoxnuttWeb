@@ -182,3 +182,20 @@ COD — that has a web order reference. This same URL is what the
 needs no separate auth: the order reference is an unguessable UUID, same
 model as `/api/orders/payment`.
 
+## Interactive checkout button
+
+Every `<button>` on the site now shows a pointer on hover — Tailwind's
+Preflight sets `button { cursor: default }` by default, which is why
+Login (and every other button) looked unclickable; overridden globally in
+`globals.css`.
+
+`PlaceOrderButton` replaces the plain checkout submit button: tapping it
+sends a small delivery truck driving across the pill on a dashed road,
+then — once the order has actually gone through — clears to "Order
+placed ✓". The drive always plays for at least 1.25s so a fast response
+doesn't look like nothing happened; a rejected order (including the
+pay-first block) skips the checkmark and resets straight to idle, leaving
+the existing error text to explain why. Enter-to-submit in the form
+triggers the exact same animation via a forwarded ref, so there's no
+second, unanimated path to placing an order.
+

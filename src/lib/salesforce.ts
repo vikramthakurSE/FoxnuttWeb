@@ -39,6 +39,8 @@ export interface SfOrderInput {
   gstin?: string;
   note?: string;
   orderRef: string;
+  /** 'online' (UPI before delivery) or 'cod' (default). */
+  paymentMethod?: "online" | "cod";
   items: SfOrderItem[];
 }
 
@@ -97,6 +99,8 @@ export interface SfPastOrder {
   saleDate: string;
   status: string;
   paymentStatus: string | null;
+  /** 'Online' | 'Cash on Delivery' (null for pre-feature orders). */
+  paymentMethod?: string | null;
   total: number | null;
   collected: number | null;
   balanceDue: number | null;
@@ -252,6 +256,28 @@ export async function placeOrder(input: SfOrderInput): Promise<SfOrderResult> {
   if (!res.ok) throw new Error(await readError(res));
   const json = (await res.json()) as { order: SfOrderResult };
   return json.order;
+}
+
+export interface SfOrderPayment {
+  found: boolean;
+  saleId?: string;
+  saleName?: string;
+  status?: string;
+  paymentMethod?: string | null;
+  paymentStatus?: string | null;
+  total?: number | null;
+  collected?: number | null;
+  balanceDue?: number;
+  paid?: boolean;
+}
+
+/** Payment state of one web order, by the website's order reference. */
+export async function fetchOrderPayment(ref: string): Promise<SfOrderPayment> {
+  const res = await sfFetch(
+    `/store/v1/order-payment?ref=${encodeURIComponent(ref)}`
+  );
+  if (!res.ok) throw new Error(await readError(res));
+  return (await res.json()) as SfOrderPayment;
 }
 
 /** Old unpaid orders that stop this business code from ordering. */

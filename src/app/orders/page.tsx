@@ -6,6 +6,7 @@ import type { SfPastOrder } from "@/lib/salesforce";
 import { formatDate, formatINR, formatKg } from "@/lib/format";
 import OrderActions from "@/components/OrderActions";
 import BusinessCodeLogin from "@/components/BusinessCodeLogin";
+import OnlinePaymentPanel from "@/components/OnlinePaymentPanel";
 
 const STATUS_STYLES: Record<string, string> = {
   "Pending Approval": "bg-gold/15 text-gold",
@@ -22,6 +23,8 @@ export default function OrdersPage() {
   >("loading");
   const [orders, setOrders] = useState<SfPastOrder[]>([]);
   const [phone, setPhone] = useState<string | null>(null);
+  // Which unpaid online order has its payment panel open.
+  const [payingRef, setPayingRef] = useState<string | null>(null);
 
   const loadOrders = useCallback(async () => {
     const res = await fetch("/api/orders");
@@ -178,6 +181,34 @@ export default function OrdersPage() {
                         : ""}
                 </span>
               </div>
+
+              {o.paymentMethod === "Online" &&
+                o.orderRef &&
+                o.status !== "Cancelled" &&
+                (o.balanceDue ?? 0) > 0 && (
+                  <div className="mt-3 border-t border-line pt-3">
+                    {payingRef === o.orderRef ? (
+                      <OnlinePaymentPanel
+                        orderRef={o.orderRef}
+                        saleName={o.saleName}
+                        amount={o.balanceDue ?? o.total ?? 0}
+                        compact
+                        onPaid={() => {
+                          setPayingRef(null);
+                          void loadOrders();
+                        }}
+                      />
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setPayingRef(o.orderRef)}
+                        className="h-11 w-full rounded-full bg-terra text-sm font-semibold text-cream hover:bg-terra-dark"
+                      >
+                        Pay {formatINR(o.balanceDue ?? 0)} online now
+                      </button>
+                    )}
+                  </div>
+                )}
 
               {o.editable && (
                 <OrderActions

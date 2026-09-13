@@ -2,11 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import BusinessCodeLogin, { type LoggedInAccount } from "./BusinessCodeLogin";
-import RequestCode from "./RequestCode";
-import RegisterForm from "./RegisterForm";
-
-type View = "login" | "request" | "notFound" | "register" | "registered";
+import BusinessAccountAccess from "./BusinessAccountAccess";
+import type { LoggedInAccount } from "./BusinessCodeLogin";
 
 /**
  * Login dialog.
@@ -26,44 +23,27 @@ export default function LoginModal({
   onLoggedIn: (account: LoggedInAccount) => void;
 }) {
   const [mounted, setMounted] = useState(false);
-  const [view, setView] = useState<View>("login");
-  const [knownPhone, setKnownPhone] = useState("");
-  const [registeredAccount, setRegisteredAccount] =
+  // Bumping this key remounts BusinessAccountAccess, resetting its internal
+  // view back to "login" — simpler than lifting all of its state up here.
+  const [resetKey, setResetKey] = useState(0);
+  // Registration opens the session server-side already; this only tracks
+  // whether dismissing the modal should still carry that account into the
+  // header, since "Start shopping" is not the only way out of the dialog.
+  const [justRegistered, setJustRegistered] =
     useState<LoggedInAccount | null>(null);
-  const [copied, setCopied] = useState(false);
 
-  // The session is already live once registration succeeds — dismissing any
-  // other way than "Start shopping" must not lose that fact for the header.
   function dismiss() {
-    if (registeredAccount) onLoggedIn(registeredAccount);
+    if (justRegistered) onLoggedIn(justRegistered);
     else onClose();
   }
   useEffect(() => setMounted(true), []);
 
-  // Always reopen on the login step, never mid-registration.
   useEffect(() => {
     if (open) {
-      setView("login");
-      setKnownPhone("");
-      setRegisteredAccount(null);
-      setCopied(false);
+      setResetKey((k) => k + 1);
+      setJustRegistered(null);
     }
   }, [open]);
-
-  const titles: Record<View, string> = {
-    login: "Login",
-    request: "Request your code",
-    notFound: "Not registered",
-    register: "Register",
-    registered: "You're all set!",
-  };
-  const subtitles: Record<View, string> = {
-    login: "Use the business code we sent you on WhatsApp.",
-    request: "We'll WhatsApp your code to the number we have on file.",
-    notFound: "",
-    register: "Takes a minute. We'll send your business code on WhatsApp.",
-    registered: "",
-  };
 
   // Escape to dismiss, and hold the page still behind the dialog.
   useEffect(() => {
@@ -81,7 +61,7 @@ export default function LoginModal({
     // Re-subscribes whenever dismiss's behaviour actually changes, so Escape
     // pressed right after a successful registration still carries the new
     // session into the header instead of calling a stale onClose.
-  }, [open, registeredAccount, onLoggedIn, onClose]);
+  }, [open, justRegistered, onLoggedIn, onClose]);
 
   if (!open || !mounted) return null;
 
@@ -116,155 +96,14 @@ export default function LoginModal({
           </svg>
         </button>
 
-        <h2 id="nn-login-title" className="font-display text-xl font-bold">
-          {titles[view]}
-        </h2>
-        {subtitles[view] && (
-          <p className="mt-1 text-sm text-ink-soft">{subtitles[view]}</p>
-        )}
-
-        <div className="mt-4">
-          {view === "login" && (
-            <>
-              <BusinessCodeLogin onLoggedIn={onLoggedIn} />
-              <div className="mt-5 grid gap-2 border-t border-line pt-4">
-                <button
-                  type="button"
-                  onClick={() => setView("request")}
-                  className="h-11 w-full rounded-full border border-line font-semibold text-ink hover:bg-cream-2"
-                >
-                  Request code
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setView("register")}
-                  className="h-11 w-full rounded-full border border-terra/40 font-semibold text-terra hover:bg-terra/5"
-                >
-                  New here? Register
-                </button>
-              </div>
-            </>
-          )}
-
-          {view === "request" && (
-            <RequestCode
-              onBack={() => setView("login")}
-              onNotRegistered={(phone) => {
-                setKnownPhone(phone);
-                setView("notFound");
-              }}
-            />
-          )}
-
-          {view === "notFound" && (
-            <div className="text-center">
-              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-terra/10 text-2xl">
-                !
-              </div>
-              <p className="mt-3 text-sm text-ink-soft">
-                <span className="font-semibold text-ink">+91 {knownPhone}</span>{" "}
-                is not registered with us yet.
-              </p>
-              <button
-                type="button"
-                onClick={() => setView("register")}
-                className="mt-4 h-12 w-full rounded-full bg-terra font-semibold text-cream hover:bg-terra-dark"
-              >
-                Register
-              </button>
-              <button
-                type="button"
-                onClick={() => setView("request")}
-                className="mt-2 w-full text-sm font-semibold text-ink-soft hover:text-ink"
-              >
-                Try another number
-              </button>
-            </div>
-          )}
-
-          {view === "register" && (
-            <>
-              <RegisterForm
-                initialPhone={knownPhone}
-                onRegistered={(a) => {
-                  // The server already opened the session on this request —
-                  // this screen's only job is to make sure the customer
-                  // actually sees their ID before it scrolls away. It is the
-                  // one place they see it until business_id_request clears
-                  // Meta and can WhatsApp it to them too.
-                  setRegisteredAccount({
-                    accountName: a.accountName,
-                    code: a.code,
-                    address: null,
-                    gstin: null,
-                    gstinVerified: false,
-                    gstinLegalName: null,
-                    gstinTradeName: null,
-                    gstinStatus: null,
-                  });
-                  setView("registered");
-                }}
-              />
-              <button
-                type="button"
-                onClick={() => setView("login")}
-                className="mt-2 w-full text-sm font-semibold text-ink-soft hover:text-ink"
-              >
-                I already have a code
-              </button>
-            </>
-          )}
-
-          {view === "registered" && registeredAccount && (
-            <div className="text-center">
-              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-leaf/15 text-2xl">
-                ✓
-              </div>
-              <p className="mt-3 text-sm text-ink-soft">
-                Welcome{registeredAccount.accountName
-                  ? `, ${registeredAccount.accountName}`
-                  : ""}
-                ! Here is your Business ID.
-              </p>
-
-              <div className="mt-4 rounded-xl border-2 border-dashed border-terra/40 bg-terra/5 px-4 py-4">
-                <p className="text-xs font-semibold uppercase tracking-wide text-ink-soft">
-                  Your Business ID
-                </p>
-                <p className="mt-1 font-mono text-2xl font-bold tracking-wider text-ink">
-                  {registeredAccount.code}
-                </p>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => {
-                  navigator.clipboard
-                    ?.writeText(registeredAccount.code)
-                    .then(() => setCopied(true))
-                    .catch(() => {});
-                }}
-                className="mt-3 h-11 w-full rounded-full border border-line text-sm font-semibold text-ink hover:bg-cream-2"
-              >
-                {copied ? "Copied ✓" : "Copy ID"}
-              </button>
-
-              <p className="mt-3 text-xs text-ink-soft">
-                Save this somewhere safe — you&apos;ll use it to log in and
-                track orders next time. You can also request it again anytime
-                from the login screen.
-              </p>
-
-              <button
-                type="button"
-                onClick={() => onLoggedIn(registeredAccount)}
-                className="mt-4 h-12 w-full rounded-full bg-terra font-semibold text-cream hover:bg-terra-dark"
-              >
-                Start shopping
-              </button>
-            </div>
-          )}
-        </div>
+        <BusinessAccountAccess
+          key={resetKey}
+          titleId="nn-login-title"
+          onLoggedIn={(a) => {
+            setJustRegistered(a);
+            onLoggedIn(a);
+          }}
+        />
       </div>
     </div>,
     document.body

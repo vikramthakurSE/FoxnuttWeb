@@ -162,3 +162,13 @@ profile / Instagram bio.
   like a sale you entered in Quick Sale.
 - **Out of stock** → the site greys the product out automatically based
   on live inventory minus active orders.
+
+## Request code / Register at checkout
+
+Checkout's "Enter your business code" step now offers the same Request
+code and New here? Register buttons as the header's login dialog — both
+drive the identical `BusinessAccountAccess` component (also used by
+`LoginModal`), so a lost code or a first-time registration works exactly
+the same way whether it's reached from the header or mid-checkout. The
+existing "Continue without a code" quick-order path stays alongside it.
+

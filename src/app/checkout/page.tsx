@@ -5,9 +5,8 @@ import { useCallback, useEffect, useState } from "react";
 import type { SfPaymentDue, SfProduct } from "@/lib/salesforce";
 import { formatINR } from "@/lib/format";
 import { useCart } from "@/components/CartProvider";
-import BusinessCodeLogin, {
-  type LoggedInAccount,
-} from "@/components/BusinessCodeLogin";
+import type { LoggedInAccount } from "@/components/BusinessCodeLogin";
+import BusinessAccountAccess from "@/components/BusinessAccountAccess";
 import GstinVerify, { type GstinVerifyResult } from "@/components/GstinVerify";
 import PaymentDueBlock from "@/components/PaymentDueBlock";
 import OnlinePaymentPanel from "@/components/OnlinePaymentPanel";
@@ -230,38 +229,36 @@ export default function CheckoutPage() {
       {step === "identify" && (
         <div className="mt-6 rounded-2xl bg-card border border-line shadow-card p-5">
           {!firstTime ? (
-            <>
-              <h2 className="font-display text-xl font-bold">
-                Enter your business code
-              </h2>
-              <p className="mt-1 mb-4 text-sm text-ink-soft">
-                We sent this to you on WhatsApp when we opened your account.
-              </p>
-              <BusinessCodeLogin
-                onLoggedIn={(a: LoggedInAccount) => {
-                  setCode(a.code);
-                  setAccountName(a.accountName);
-                  if (a.accountName) setName(a.accountName);
-                  if (a.address) setAddress(a.address);
-                  if (a.gstin) setGstin(a.gstin);
-                  if (a.gstinVerified) {
-                    setGstinVerified(true);
-                    setGstinLegalName(a.gstinLegalName);
-                  }
-                  setStep("details");
-                }}
-              />
-              <div className="mt-5 border-t border-line pt-4 text-center">
-                <p className="text-sm text-ink-soft">Ordering for the first time?</p>
-                <button
-                  type="button"
-                  onClick={() => setFirstTime(true)}
-                  className="mt-1 text-sm font-semibold text-terra hover:underline"
-                >
-                  Continue without a code
-                </button>
-              </div>
-            </>
+            <BusinessAccountAccess
+              loginTitle="Enter your business code"
+              loginSubtitle="We sent this to you on WhatsApp when we opened your account."
+              onLoggedIn={(a: LoggedInAccount) => {
+                setCode(a.code);
+                setAccountName(a.accountName);
+                if (a.accountName) setName(a.accountName);
+                if (a.address) setAddress(a.address);
+                if (a.gstin) setGstin(a.gstin);
+                if (a.gstinVerified) {
+                  setGstinVerified(true);
+                  setGstinLegalName(a.gstinLegalName);
+                }
+                setStep("details");
+              }}
+              footer={
+                <div className="mt-5 border-t border-line pt-4 text-center">
+                  <p className="text-sm text-ink-soft">
+                    Ordering without an account?
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setFirstTime(true)}
+                    className="mt-1 text-sm font-semibold text-terra hover:underline"
+                  >
+                    Continue without a code
+                  </button>
+                </div>
+              }
+            />
           ) : (
             <>
               <h2 className="font-display text-xl font-bold">

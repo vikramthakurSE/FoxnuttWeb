@@ -1,5 +1,6 @@
 "use client";
 
+import { BusyLabel } from "@/components/Spinner";
 import { useState } from "react";
 
 export interface GstinVerifyResult {
@@ -119,7 +120,7 @@ export default function GstinVerify({
           onClick={() => void verify()}
           className="h-12 shrink-0 rounded-xl bg-pine px-5 font-semibold text-mist hover:bg-pine-dark disabled:opacity-50"
         >
-          {busy ? "Checking…" : "Verify"}
+          {busy ? <BusyLabel>Checking</BusyLabel> : "Verify"}
         </button>
       </div>
 

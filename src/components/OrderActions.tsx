@@ -1,5 +1,6 @@
 "use client";
 
+import { BusyLabel } from "@/components/Spinner";
 import { useState } from "react";
 import type { SfPastOrder } from "@/lib/salesforce";
 import { formatINR } from "@/lib/format";
@@ -101,7 +102,7 @@ export default function OrderActions({
             }
             className="h-10 flex-1 rounded-full bg-pine text-sm font-semibold text-mist hover:bg-pine-dark disabled:opacity-50"
           >
-            {busy ? "Cancelling…" : "Yes, cancel it"}
+            {busy ? <BusyLabel>Cancelling</BusyLabel> : "Yes, cancel it"}
           </button>
           <button
             type="button"
@@ -179,7 +180,7 @@ export default function OrderActions({
           }
           className="h-10 flex-1 rounded-full bg-pine text-sm font-semibold text-mist hover:bg-pine-dark disabled:opacity-50"
         >
-          {busy ? "Saving…" : "Save changes"}
+          {busy ? <BusyLabel>Saving</BusyLabel> : "Save changes"}
         </button>
         <button
           type="button"

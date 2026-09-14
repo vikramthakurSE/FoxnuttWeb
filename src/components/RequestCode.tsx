@@ -1,5 +1,6 @@
 "use client";
 
+import { BusyLabel } from "@/components/Spinner";
 import { useState } from "react";
 
 /**
@@ -93,7 +94,7 @@ export default function RequestCode({
         disabled={busy || phone.length !== 10}
         className="mt-3 h-12 w-full rounded-full bg-pine font-semibold text-mist hover:bg-pine-dark disabled:opacity-50"
       >
-        {busy ? "Checking…" : "Send my code on WhatsApp"}
+        {busy ? <BusyLabel>Sending your code</BusyLabel> : "Send my code on WhatsApp"}
       </button>
       <button
         type="button"

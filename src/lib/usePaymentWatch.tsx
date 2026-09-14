@@ -1,5 +1,6 @@
 "use client";
 
+import { BusyLabel } from "@/components/Spinner";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 /**
@@ -102,7 +103,7 @@ export function WaitingFooter({
         disabled={checking}
         className="mt-3 h-12 w-full rounded-full border border-ink/20 font-semibold hover:bg-mist-2 disabled:opacity-50"
       >
-        {checking ? "Checking…" : "I have paid — check now"}
+        {checking ? <BusyLabel>Checking</BusyLabel> : "I have paid — check now"}
       </button>
       <style>{`
         @keyframes nn-dot { 0%, 100% { opacity: .35; transform: scale(.8); } 50% { opacity: 1; transform: scale(1.15); } }

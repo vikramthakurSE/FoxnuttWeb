@@ -82,7 +82,7 @@ export async function liftCard(tile: HTMLElement, slug: string): Promise<void> {
         { clipPath: circle, transform: "scale(.94)", offset: 0.6 },
         { clipPath: circle, transform: `scale(${LIFT_SCALE})` },
       ],
-      { duration: 420, easing: MORPH_EASE, fill: "forwards" },
+      { duration: 280, easing: MORPH_EASE, fill: "forwards" },
     ).finished;
   } catch {
     return;
@@ -162,6 +162,6 @@ export function dropOntoCard(tile: HTMLElement, slug: string): void {
       },
       { clipPath: FULL_INSET, transform: "none" },
     ],
-    { duration: 480, easing: MORPH_EASE },
+    { duration: 360, easing: MORPH_EASE },
   );
 }

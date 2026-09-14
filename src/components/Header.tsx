@@ -80,10 +80,10 @@ export default function Header() {
   }
 
   return (
-    <header className="sticky top-0 z-40 bg-cream/95 backdrop-blur border-b border-line">
+    <header className="sticky top-0 z-40 bg-mist/95 backdrop-blur border-b border-line">
       <div className="mx-auto max-w-5xl px-4 h-16 flex items-center justify-between gap-3">
         <Link href="/" className="leading-tight" onClick={() => setMenuOpen(false)}>
-          <span className="font-display text-xl font-bold text-terra block -mb-1">
+          <span className="font-display text-xl font-bold text-pine block -mb-1">
             Nutty
           </span>
           <span className="font-display text-xl font-bold text-ink">
@@ -99,7 +99,7 @@ export default function Header() {
               href={l.href}
               className={`px-2.5 py-1.5 rounded-full transition-colors ${
                 pathname === l.href
-                  ? "bg-ink text-cream"
+                  ? "bg-ink text-mist"
                   : "text-ink-soft hover:text-ink"
               }`}
             >
@@ -136,7 +136,7 @@ export default function Header() {
             aria-label={menuOpen ? "Close menu" : "Open menu"}
             aria-expanded={menuOpen}
             aria-controls="nn-mobile-menu"
-            className={`nnm-burger relative inline-flex items-center justify-center h-10 w-10 rounded-full border border-line text-ink hover:bg-cream-2 transition-colors ${menuOpen ? "nnm-burger-open bg-cream-2" : ""}`}
+            className={`nnm-burger relative inline-flex items-center justify-center h-10 w-10 rounded-full border border-line text-ink hover:bg-mist-2 transition-colors ${menuOpen ? "nnm-burger-open bg-mist-2" : ""}`}
           >
             <span className="nnm-bar nnm-bar-1" />
             <span className="nnm-bar nnm-bar-2" />
@@ -163,12 +163,12 @@ export default function Header() {
                       onClick={() => setMenuOpen(false)}
                       className={`flex items-center justify-between rounded-2xl px-4 py-3 transition-colors ${
                         pathname === l.href
-                          ? "bg-ink text-cream"
-                          : "text-ink hover:bg-cream-2"
+                          ? "bg-ink text-mist"
+                          : "text-ink hover:bg-mist-2"
                       }`}
                     >
                       {l.label}
-                      <span aria-hidden="true" className={pathname === l.href ? "text-cream/60" : "text-ink-soft/50"}>→</span>
+                      <span aria-hidden="true" className={pathname === l.href ? "text-mist/60" : "text-ink-soft/50"}>→</span>
                     </Link>
                   </li>
                 ))}
@@ -180,7 +180,7 @@ export default function Header() {
                     <button
                       type="button"
                       onClick={() => void logout()}
-                      className="w-full text-left rounded-2xl px-4 py-3 text-ink hover:bg-cream-2 transition-colors"
+                      className="w-full text-left rounded-2xl px-4 py-3 text-ink hover:bg-mist-2 transition-colors"
                     >
                       <span className="block text-xs text-ink-soft">
                         Signed in as {account}
@@ -194,7 +194,7 @@ export default function Header() {
                         setMenuOpen(false);
                         setShowLogin(true);
                       }}
-                      className="w-full text-left rounded-2xl px-4 py-3 text-ink hover:bg-cream-2 transition-colors"
+                      className="w-full text-left rounded-2xl px-4 py-3 text-ink hover:bg-mist-2 transition-colors"
                     >
                       Login
                     </button>
@@ -222,7 +222,7 @@ export default function Header() {
         .nnm-overlay { position: fixed; left: 0; right: 0; top: 64px; bottom: 0; z-index: 35; }
         .nnm-backdrop {
           position: absolute; inset: 0;
-          background: rgba(46,31,20,.18);
+          background: rgba(27,42,33,.18);
           -webkit-backdrop-filter: blur(0px); backdrop-filter: blur(0px);
           opacity: 0;
           transition: opacity .35s ease, backdrop-filter .35s ease, -webkit-backdrop-filter .35s ease;
@@ -232,8 +232,8 @@ export default function Header() {
         .nnm-panel {
           position: absolute; left: 12px; right: 12px; top: 8px;
           padding: 10px; border-radius: 22px;
-          background: rgba(255,253,247,.97); border: 1px solid #e7d9bd;
-          box-shadow: 0 24px 48px -20px rgba(46,31,20,.45);
+          background: rgba(255,255,255,.97); border: 1px solid #dde3d6;
+          box-shadow: 0 24px 48px -20px rgba(27,42,33,.45);
           transform-origin: top right;
           opacity: 0; transform: translateY(-10px) scale(.96);
           transition: opacity .28s ease, transform .38s cubic-bezier(.34,1.25,.64,1);
@@ -265,7 +265,7 @@ function CartButton({ ready, count }: { ready: boolean; count: number }) {
     <Link
       href="/cart"
       aria-label="Cart"
-      className="relative inline-flex items-center justify-center h-10 w-10 rounded-full bg-terra text-cream hover:bg-terra-dark transition-colors"
+      className="relative inline-flex items-center justify-center h-10 w-10 rounded-full bg-pine text-mist hover:bg-pine-dark transition-colors"
     >
       <svg
         width="18"

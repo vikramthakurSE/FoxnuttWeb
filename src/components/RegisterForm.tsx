@@ -10,7 +10,7 @@ export interface RegisteredAccount {
 }
 
 const field =
-  "mt-1.5 h-12 w-full rounded-xl border border-line bg-card px-4 outline-none focus:border-terra";
+  "mt-1.5 h-12 w-full rounded-xl border border-line bg-card px-4 outline-none focus:border-pine";
 const label = "block text-sm font-semibold";
 
 export default function RegisterForm({
@@ -95,14 +95,14 @@ export default function RegisterForm({
           WhatsApp number *
         </label>
         <div className="mt-1.5 flex gap-2">
-          <span className="flex h-12 items-center rounded-xl border border-line bg-cream-2 px-3 text-sm font-semibold text-ink-soft">
+          <span className="flex h-12 items-center rounded-xl border border-line bg-mist-2 px-3 text-sm font-semibold text-ink-soft">
             +91
           </span>
           <input
             id="rg-phone"
             type="tel"
             inputMode="numeric"
-            className="h-12 flex-1 rounded-xl border border-line bg-card px-4 outline-none focus:border-terra"
+            className="h-12 flex-1 rounded-xl border border-line bg-card px-4 outline-none focus:border-pine"
             value={phone}
             onChange={(e) =>
               setPhone(e.target.value.replace(/\D/g, "").slice(0, 10))
@@ -196,7 +196,7 @@ export default function RegisterForm({
       <button
         type="submit"
         disabled={busy || !canSubmit}
-        className="mt-4 h-12 w-full rounded-full bg-terra font-semibold text-cream hover:bg-terra-dark disabled:opacity-50"
+        className="mt-4 h-12 w-full rounded-full bg-pine font-semibold text-mist hover:bg-pine-dark disabled:opacity-50"
       >
         {busy ? "Registering…" : "Register"}
       </button>
@@ -205,7 +205,7 @@ export default function RegisterForm({
       </p>
 
       {error && (
-        <p className="mt-3 rounded-xl border border-terra/30 bg-terra/10 px-4 py-2.5 text-sm text-terra-dark">
+        <p className="mt-3 rounded-xl border border-danger/30 bg-danger/10 px-4 py-2.5 text-sm text-danger">
           {error}
         </p>
       )}

@@ -38,7 +38,7 @@ export default function PaymentDueBlock({
         <button
           type="button"
           onClick={onCleared}
-          className="h-12 w-full rounded-full bg-terra font-semibold text-cream hover:bg-terra-dark"
+          className="h-12 w-full rounded-full bg-pine font-semibold text-mist hover:bg-pine-dark"
         >
           Continue to place your order
         </button>
@@ -47,8 +47,8 @@ export default function PaymentDueBlock({
   }
 
   return (
-    <div className="mt-6 rounded-2xl bg-card border border-terra/40 shadow-card p-5">
-      <h2 className="font-display text-xl font-bold text-terra-dark">
+    <div className="mt-6 rounded-2xl bg-card border border-pine/40 shadow-card p-5">
+      <h2 className="font-display text-xl font-bold text-pine-dark">
         Please clear your pending payment first
       </h2>
       <p className="mt-2 text-sm text-ink-soft">
@@ -65,7 +65,7 @@ export default function PaymentDueBlock({
                 Delivered {formatDate(o.saleDate)} · {o.daysOld} days ago
               </p>
             </div>
-            <span className="font-semibold text-terra-dark shrink-0">
+            <span className="font-semibold text-pine-dark shrink-0">
               {formatINR(o.balanceDue)}
             </span>
           </li>

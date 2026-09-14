@@ -11,7 +11,7 @@ import OnlinePaymentPanel from "@/components/OnlinePaymentPanel";
 const STATUS_STYLES: Record<string, string> = {
   "Pending Approval": "bg-gold/15 text-gold",
   Confirmed: "bg-leaf/15 text-leaf",
-  "Out for Delivery": "bg-terra/10 text-terra",
+  "Out for Delivery": "bg-pine/10 text-pine",
   Delivered: "bg-leaf/15 text-leaf",
   Cancelled: "bg-ink/10 text-ink-soft",
   Received: "bg-gold/15 text-gold",
@@ -110,7 +110,7 @@ export default function OrdersPage() {
           <button
             type="button"
             onClick={() => void logout()}
-            className="font-semibold text-terra hover:underline"
+            className="font-semibold text-pine hover:underline"
           >
             Log out
           </button>
@@ -122,7 +122,7 @@ export default function OrdersPage() {
           <p className="text-ink-soft">No orders yet on this number.</p>
           <Link
             href="/products"
-            className="mt-5 inline-flex h-12 items-center rounded-full bg-terra px-7 font-semibold text-cream hover:bg-terra-dark"
+            className="mt-5 inline-flex h-12 items-center rounded-full bg-pine px-7 font-semibold text-mist hover:bg-pine-dark"
           >
             Place your first order
           </Link>
@@ -192,7 +192,7 @@ export default function OrdersPage() {
                       href={`/api/orders/receipt?ref=${o.orderRef}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex h-11 w-full items-center justify-center gap-2 rounded-full border border-ink/20 text-sm font-semibold hover:bg-cream-2"
+                      className="flex h-11 w-full items-center justify-center gap-2 rounded-full border border-ink/20 text-sm font-semibold hover:bg-mist-2"
                     >
                       📄 Download receipt
                     </a>
@@ -219,7 +219,7 @@ export default function OrdersPage() {
                       <button
                         type="button"
                         onClick={() => setPayingRef(o.orderRef)}
-                        className="h-11 w-full rounded-full bg-terra text-sm font-semibold text-cream hover:bg-terra-dark"
+                        className="h-11 w-full rounded-full bg-pine text-sm font-semibold text-mist hover:bg-pine-dark"
                       >
                         Pay {formatINR(o.balanceDue ?? 0)} online now
                       </button>

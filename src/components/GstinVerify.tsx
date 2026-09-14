@@ -88,7 +88,7 @@ export default function GstinVerify({
             setResult(null);
             onResolved(null);
           }}
-          className="mt-2 text-xs font-semibold text-terra hover:underline"
+          className="mt-2 text-xs font-semibold text-pine hover:underline"
         >
           Not your business? Change GSTIN
         </button>
@@ -111,13 +111,13 @@ export default function GstinVerify({
           onChange={(e) => editGstin(e.target.value)}
           maxLength={15}
           placeholder="e.g. 22AAAAA0000A1Z5"
-          className="h-12 flex-1 rounded-xl border border-line bg-card px-4 font-mono text-sm tracking-wide outline-none focus:border-terra"
+          className="h-12 flex-1 rounded-xl border border-line bg-card px-4 font-mono text-sm tracking-wide outline-none focus:border-pine"
         />
         <button
           type="button"
           disabled={busy || !GSTIN_RE.test(gstin)}
           onClick={() => void verify()}
-          className="h-12 shrink-0 rounded-xl bg-terra px-5 font-semibold text-cream hover:bg-terra-dark disabled:opacity-50"
+          className="h-12 shrink-0 rounded-xl bg-pine px-5 font-semibold text-mist hover:bg-pine-dark disabled:opacity-50"
         >
           {busy ? "Checking…" : "Verify"}
         </button>
@@ -130,7 +130,7 @@ export default function GstinVerify({
         </p>
       )}
       {error && (
-        <p className="mt-2 rounded-xl border border-terra/30 bg-terra/10 px-4 py-2.5 text-sm text-terra-dark">
+        <p className="mt-2 rounded-xl border border-danger/30 bg-danger/10 px-4 py-2.5 text-sm text-danger">
           {error}
         </p>
       )}

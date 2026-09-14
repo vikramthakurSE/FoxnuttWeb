@@ -83,7 +83,7 @@ export default function LoginModal({
           type="button"
           aria-label="Close"
           onClick={dismiss}
-          className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full text-ink-soft transition-colors hover:bg-cream-2 hover:text-ink"
+          className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full text-ink-soft transition-colors hover:bg-mist-2 hover:text-ink"
         >
           <svg
             width="18"

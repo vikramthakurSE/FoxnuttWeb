@@ -197,7 +197,7 @@ export default function CheckoutPage() {
         <p className="font-display text-2xl font-bold">Nothing to check out</p>
         <Link
           href="/products"
-          className="mt-6 inline-flex h-12 items-center rounded-full bg-terra px-7 font-semibold text-cream hover:bg-terra-dark"
+          className="mt-6 inline-flex h-12 items-center rounded-full bg-pine px-7 font-semibold text-mist hover:bg-pine-dark"
         >
           Browse products
         </Link>
@@ -268,7 +268,7 @@ export default function CheckoutPage() {
                   <button
                     type="button"
                     onClick={() => setFirstTime(true)}
-                    className="mt-1 text-sm font-semibold text-terra hover:underline"
+                    className="mt-1 text-sm font-semibold text-pine hover:underline"
                   >
                     Continue without a code
                   </button>
@@ -288,7 +288,7 @@ export default function CheckoutPage() {
                 WhatsApp mobile number
               </label>
               <div className="mt-1.5 flex gap-2">
-                <span className="flex h-12 items-center rounded-xl border border-line bg-cream-2 px-3 text-sm font-semibold text-ink-soft">
+                <span className="flex h-12 items-center rounded-xl border border-line bg-mist-2 px-3 text-sm font-semibold text-ink-soft">
                   +91
                 </span>
                 <input
@@ -301,7 +301,7 @@ export default function CheckoutPage() {
                   onChange={(e) =>
                     setTypedPhone(e.target.value.replace(/\D/g, "").slice(0, 10))
                   }
-                  className="h-12 flex-1 rounded-xl border border-line bg-card px-4 outline-none focus:border-terra"
+                  className="h-12 flex-1 rounded-xl border border-line bg-card px-4 outline-none focus:border-pine"
                 />
               </div>
               <button
@@ -311,7 +311,7 @@ export default function CheckoutPage() {
                   setPhone(typedPhone);
                   setStep("details");
                 }}
-                className="mt-3 h-12 w-full rounded-full bg-terra font-semibold text-cream hover:bg-terra-dark disabled:opacity-50"
+                className="mt-3 h-12 w-full rounded-full bg-pine font-semibold text-mist hover:bg-pine-dark disabled:opacity-50"
               >
                 Continue
               </button>
@@ -319,7 +319,7 @@ export default function CheckoutPage() {
                 <button
                   type="button"
                   onClick={() => setFirstTime(false)}
-                  className="text-sm font-semibold text-terra hover:underline"
+                  className="text-sm font-semibold text-pine hover:underline"
                 >
                   I have a business code
                 </button>
@@ -371,7 +371,7 @@ export default function CheckoutPage() {
             value={name}
             onChange={(e) => setName(e.target.value)}
             required
-            className="mt-1.5 h-12 w-full rounded-xl border border-line bg-card px-4 outline-none focus:border-terra"
+            className="mt-1.5 h-12 w-full rounded-xl border border-line bg-card px-4 outline-none focus:border-pine"
           />
 
           <label
@@ -384,7 +384,7 @@ export default function CheckoutPage() {
             id="nn-business"
             value={businessName}
             onChange={(e) => setBusinessName(e.target.value)}
-            className="mt-1.5 h-12 w-full rounded-xl border border-line bg-card px-4 outline-none focus:border-terra"
+            className="mt-1.5 h-12 w-full rounded-xl border border-line bg-card px-4 outline-none focus:border-pine"
           />
 
           <label
@@ -399,7 +399,7 @@ export default function CheckoutPage() {
             onChange={(e) => setAddress(e.target.value)}
             required
             rows={3}
-            className="mt-1.5 w-full rounded-xl border border-line bg-card px-4 py-3 outline-none focus:border-terra"
+            className="mt-1.5 w-full rounded-xl border border-line bg-card px-4 py-3 outline-none focus:border-pine"
           />
 
           {firstTime ? (
@@ -419,7 +419,7 @@ export default function CheckoutPage() {
                 value={gstin}
                 onChange={(e) => setGstin(e.target.value.toUpperCase())}
                 maxLength={15}
-                className="mt-1.5 h-12 w-full rounded-xl border border-line bg-card px-4 outline-none focus:border-terra"
+                className="mt-1.5 h-12 w-full rounded-xl border border-line bg-card px-4 outline-none focus:border-pine"
               />
             </>
           )}
@@ -432,7 +432,7 @@ export default function CheckoutPage() {
             value={note}
             onChange={(e) => setNote(e.target.value)}
             rows={2}
-            className="mt-1.5 w-full rounded-xl border border-line bg-card px-4 py-3 outline-none focus:border-terra"
+            className="mt-1.5 w-full rounded-xl border border-line bg-card px-4 py-3 outline-none focus:border-pine"
           />
 
           <fieldset className="mt-5">
@@ -460,8 +460,8 @@ export default function CheckoutPage() {
                     key={opt.id}
                     className={`flex cursor-pointer gap-3 rounded-xl border px-4 py-3 text-sm transition-colors ${
                       active
-                        ? "border-terra bg-terra/5 ring-1 ring-terra"
-                        : "border-line bg-card hover:bg-cream-2"
+                        ? "border-pine bg-pine/5 ring-1 ring-pine"
+                        : "border-line bg-card hover:bg-mist-2"
                     }`}
                   >
                     <input
@@ -484,7 +484,7 @@ export default function CheckoutPage() {
           </fieldset>
 
           {error && (
-            <p className="mt-4 rounded-xl bg-terra/10 border border-terra/30 px-4 py-2.5 text-sm text-terra-dark">
+            <p className="mt-4 rounded-xl border border-danger/30 bg-danger/10 px-4 py-2.5 text-sm text-danger">
               {error}
             </p>
           )}
@@ -497,7 +497,7 @@ export default function CheckoutPage() {
             onSuccessShown={finishOrder}
           />
           {gstinBlocking && (
-            <p className="mt-2 text-center text-xs font-semibold text-terra">
+            <p className="mt-2 text-center text-xs font-semibold text-pine">
               Verify your GSTIN above to continue.
             </p>
           )}
@@ -572,13 +572,13 @@ export default function CheckoutPage() {
           <div className="mt-6 flex flex-col gap-2">
             <Link
               href="/orders"
-              className="h-12 rounded-full bg-terra font-semibold text-cream hover:bg-terra-dark flex items-center justify-center"
+              className="h-12 rounded-full bg-pine font-semibold text-mist hover:bg-pine-dark flex items-center justify-center"
             >
               View my orders
             </Link>
             <Link
               href="/products"
-              className="h-12 rounded-full border border-ink/20 font-semibold hover:bg-cream-2 flex items-center justify-center"
+              className="h-12 rounded-full border border-ink/20 font-semibold hover:bg-mist-2 flex items-center justify-center"
             >
               Continue shopping
             </Link>

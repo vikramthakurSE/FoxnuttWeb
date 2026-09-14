@@ -27,7 +27,7 @@ export default function ProductCard({ product }: { product: SfProduct }) {
         <div className="flex items-start justify-between gap-2">
           <Link
             href={`/products/${product.slug}`}
-            className="font-display font-bold leading-snug hover:text-terra"
+            className="font-display font-bold leading-snug hover:text-pine"
           >
             {product.name}
           </Link>
@@ -59,10 +59,10 @@ export default function ProductCard({ product }: { product: SfProduct }) {
             }}
             className={`rounded-full px-4 h-10 text-sm font-semibold transition-colors ${
               out
-                ? "bg-cream-2 text-ink-soft cursor-not-allowed"
+                ? "bg-mist-2 text-ink-soft cursor-not-allowed"
                 : added
-                  ? "bg-leaf text-cream"
-                  : "bg-terra text-cream hover:bg-terra-dark"
+                  ? "bg-leaf text-mist"
+                  : "bg-pine text-mist hover:bg-pine-dark"
             }`}
           >
             {out ? "Out of stock" : added ? "Added ✓" : "Add"}

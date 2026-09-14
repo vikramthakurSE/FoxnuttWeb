@@ -35,7 +35,7 @@ export default async function HomePage() {
           Katihar, Bihar · Est. quality since day one
         </p>
         <h1 className="mt-3 font-display text-4xl sm:text-6xl font-black leading-tight">
-          <span className="text-terra">Nutty Nirvana</span>
+          <span className="text-pine">Nutty Nirvana</span>
           <br />
           Premium Makhana
         </h1>
@@ -46,13 +46,13 @@ export default async function HomePage() {
         <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
           <Link
             href="/products"
-            className="rounded-full bg-terra px-7 h-12 inline-flex items-center text-cream font-semibold hover:bg-terra-dark transition-colors"
+            className="rounded-full bg-pine px-7 h-12 inline-flex items-center text-mist font-semibold hover:bg-pine-dark transition-colors"
           >
             Browse products
           </Link>
           <Link
             href="/orders"
-            className="rounded-full border border-ink/20 px-7 h-12 inline-flex items-center font-semibold hover:bg-cream-2 transition-colors"
+            className="rounded-full border border-ink/20 px-7 h-12 inline-flex items-center font-semibold hover:bg-mist-2 transition-colors"
           >
             Track my orders
           </Link>
@@ -70,7 +70,7 @@ export default async function HomePage() {
           </h2>
           <Link
             href="/products"
-            className="text-sm font-semibold text-terra hover:text-terra-dark"
+            className="text-sm font-semibold text-pine hover:text-pine-dark"
           >
             View all →
           </Link>
@@ -102,7 +102,7 @@ export default async function HomePage() {
 
       {/* How ordering works */}
       <section className="mx-auto max-w-5xl px-4 py-10">
-        <div className="rounded-3xl bg-ink text-cream p-6 sm:p-10">
+        <div className="rounded-3xl bg-ink text-mist p-6 sm:p-10">
           <h2 className="font-display text-2xl sm:text-3xl font-bold text-center">
             How ordering works
           </h2>
@@ -126,8 +126,8 @@ export default async function HomePage() {
                   {i + 1}
                 </span>
                 <span>
-                  <span className="block font-semibold text-cream">{title}</span>
-                  <span className="text-cream/70">{body}</span>
+                  <span className="block font-semibold text-mist">{title}</span>
+                  <span className="text-mist/70">{body}</span>
                 </span>
               </li>
             ))}

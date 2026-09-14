@@ -123,7 +123,7 @@ export default function BusinessCodeLogin({
       >
         {title !== undefined && (
           <div className="mb-5">
-            <div className={`nnc-lock mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-cream-2 shadow-[inset_0_1px_0_#fff,0_6px_14px_-8px_rgba(46,31,20,.35)] ${verified ? "nnc-lock-open" : ""}`}>
+            <div className={`nnc-lock mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-mist-2 shadow-[inset_0_1px_0_#fff,0_6px_14px_-8px_rgba(27,42,33,.35)] ${verified ? "nnc-lock-open" : ""}`}>
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-ink">
                 <rect x="5" y="11" width="14" height="10" rx="2.5" />
                 <path className="nnc-shackle" d="M8 11V8a4 4 0 0 1 8 0v3" />
@@ -229,7 +229,7 @@ export default function BusinessCodeLogin({
             type={verified ? "button" : "submit"}
             disabled={!verified && (!complete || verifying)}
             onClick={verified ? () => account && onLoggedIn(account) : undefined}
-            className={`nnc-verify absolute inset-0 w-full overflow-hidden rounded-2xl font-semibold text-cream ${complete || verifying ? "nnc-verify-ready" : ""} ${verified ? "nnc-verify-done" : ""}`}
+            className={`nnc-verify absolute inset-0 w-full overflow-hidden rounded-2xl font-semibold text-mist ${complete || verifying ? "nnc-verify-ready" : ""} ${verified ? "nnc-verify-done" : ""}`}
           >
             <span className={`nnc-btn-label ${verifying || verified ? "nnc-btn-label-out" : ""}`}>Verify code</span>
             <span className={`nnc-btn-label ${verifying ? "" : "nnc-btn-label-out"}`} aria-hidden={!verifying}>
@@ -250,7 +250,7 @@ export default function BusinessCodeLogin({
         )}
 
         {error && stage === "error" && (
-          <p role="alert" className="nnc-err mt-3 rounded-xl border border-terra/30 bg-terra/10 px-4 py-2.5 text-sm text-terra-dark">
+          <p role="alert" className="nnc-err mt-3 rounded-xl border border-danger/30 bg-danger/10 px-4 py-2.5 text-sm text-danger">
             {error}
           </p>
         )}
@@ -269,18 +269,18 @@ export default function BusinessCodeLogin({
 
           .nnc-box {
             position: relative; display: flex; align-items: center; justify-content: center;
-            height: 52px; border-radius: 12px; background: #fbf8f2;
-            border: 1.5px solid #e7d9bd; color: #2e1f14;
+            height: 52px; border-radius: 12px; background: #f8faf6;
+            border: 1.5px solid #dde3d6; color: #1b2a21;
             font-size: 20px; font-weight: 700; font-family: var(--font-body);
-            box-shadow: 0 1px 0 #fff inset, 0 4px 10px -8px rgba(46,31,20,.35);
+            box-shadow: 0 1px 0 #fff inset, 0 4px 10px -8px rgba(27,42,33,.35);
             transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease, background-color .2s ease, color .2s ease;
           }
-          .nnc-box-filled { background: #fff; border-color: #2e1f14; }
-          .nnc-box-active { border-color: #2e1f14; border-width: 2.5px; transform: translateY(-2px); box-shadow: 0 0 0 4px rgba(46,31,20,.07), 0 10px 18px -10px rgba(46,31,20,.45); }
+          .nnc-box-filled { background: #fff; border-color: #1b2a21; }
+          .nnc-box-active { border-color: #1b2a21; border-width: 2.5px; transform: translateY(-2px); box-shadow: 0 0 0 4px rgba(27,42,33,.07), 0 10px 18px -10px rgba(27,42,33,.45); }
           .nnc-char { display: inline-block; animation: nnc-pop .18s ease-out; }
           .nnc-box:not(.nnc-box-filled) .nnc-char { animation: none; }
           @keyframes nnc-pop { from { transform: scale(.6); opacity: 0; } to { transform: none; opacity: 1; } }
-          .nnc-caret { position: absolute; width: 2px; height: 22px; border-radius: 1px; background: #2e1f14; animation: nnc-blink 1s steps(1) infinite; }
+          .nnc-caret { position: absolute; width: 2px; height: 22px; border-radius: 1px; background: #1b2a21; animation: nnc-blink 1s steps(1) infinite; }
           @keyframes nnc-blink { 50% { opacity: 0; } }
 
           .nnc-box-bob { animation: nnc-bob .9s ease-in-out infinite; animation-delay: calc(var(--i) * 70ms); }
@@ -288,13 +288,13 @@ export default function BusinessCodeLogin({
 
           .nnc-shake { animation: nnc-shake .42s cubic-bezier(.36,.07,.19,.97); }
           @keyframes nnc-shake { 15%,85% { transform: translateX(-2px); } 30%,70% { transform: translateX(5px); } 45%,55% { transform: translateX(-7px); } }
-          .nnc-box-error { border-color: #c2401f; background: #fdf1ec; color: #9e3115; }
+          .nnc-box-error { border-color: #b42318; background: #fdf0ee; color: #912018; }
 
           /* Success: flood green, lose the characters, tilt, slide to the centre and fuse. */
           .nnc-boxes-done .nnc-box { animation: nnc-fuse .62s cubic-bezier(.55,0,.35,1) forwards; }
           .nnc-boxes-done .nnc-char, .nnc-boxes-done .nnc-caret { transition: opacity .15s ease; opacity: 0; }
           @keyframes nnc-fuse {
-            0%   { background: #fff; border-color: #2e1f14; transform: none; border-radius: 12px; opacity: 1; }
+            0%   { background: #fff; border-color: #1b2a21; transform: none; border-radius: 12px; opacity: 1; }
             22%  { background: #6fd6a4; border-color: #3fbf85; transform: none; border-radius: 12px; }
             40%  { background: #2fb57a; border-color: #2fb57a; transform: rotate(var(--tilt)) scale(.94); border-radius: 12px; }
             78%  { background: #23a56d; border-color: #23a56d; transform: translateX(calc(var(--k) * (100% + 6px))) rotate(calc(var(--tilt) * -.5)) scale(.8); border-radius: 40%; opacity: 1; }
@@ -318,8 +318,8 @@ export default function BusinessCodeLogin({
           .nnc-verify { background: #b9b3ab; transition: background-color .45s ease, transform .15s ease, box-shadow .45s ease; }
           .nnc-verify-done, .nnc-verify-done:hover { background: #1f9d66 !important; box-shadow: 0 14px 26px -12px rgba(23,145,92,.75), inset 0 1px 0 rgba(255,255,255,.25); color: #fff; }
           .nnc-verify-done:hover { filter: brightness(1.05); }
-          .nnc-verify:focus-visible { outline: none; box-shadow: 0 0 0 3px #fffdf7, 0 0 0 5px rgba(46,31,20,.35); }
-          .nnc-verify-done:focus-visible { box-shadow: 0 0 0 3px #fffdf7, 0 0 0 5px rgba(31,157,102,.55), 0 14px 26px -12px rgba(23,145,92,.75); }
+          .nnc-verify:focus-visible { outline: none; box-shadow: 0 0 0 3px #ffffff, 0 0 0 5px rgba(27,42,33,.35); }
+          .nnc-verify-done:focus-visible { box-shadow: 0 0 0 3px #ffffff, 0 0 0 5px rgba(31,157,102,.55), 0 14px 26px -12px rgba(23,145,92,.75); }
           .nnc-btn-label { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; transition: opacity .25s ease, transform .3s ease; }
           .nnc-btn-label-out { opacity: 0; transform: translateY(6px); pointer-events: none; }
           .nnc-btn-label-in { animation: nnc-continue-in .4s cubic-bezier(.34,1.3,.64,1) .35s both; }

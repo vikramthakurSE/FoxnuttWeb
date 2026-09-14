@@ -126,8 +126,8 @@ const PlaceOrderButton = forwardRef<
             ? "Placing your order"
             : idleLabel
       }
-      className={`nn-ob relative mt-5 h-14 w-full overflow-hidden rounded-full font-semibold text-cream ${
-        active ? "nn-ob-active" : "bg-terra hover:bg-terra-dark"
+      className={`nn-ob relative mt-5 h-14 w-full overflow-hidden rounded-full font-semibold text-mist ${
+        active ? "nn-ob-active" : "bg-pine hover:bg-pine-dark"
       } ${disabled && !active ? "opacity-50" : ""}`}
     >
       <span className={`nn-ob-label ${active ? "nn-ob-label-out" : ""}`}>
@@ -156,7 +156,7 @@ const PlaceOrderButton = forwardRef<
       )}
 
       {phase === "waiting" && (
-        <span className="nn-ob-center nn-fade-in text-sm text-cream/80">
+        <span className="nn-ob-center nn-fade-in text-sm text-mist/80">
           Placing order…
         </span>
       )}

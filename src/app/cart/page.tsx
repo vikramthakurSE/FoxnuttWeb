@@ -45,7 +45,7 @@ export default function CartPage() {
         </p>
         <Link
           href="/products"
-          className="mt-6 inline-flex h-12 items-center rounded-full bg-terra px-7 font-semibold text-cream hover:bg-terra-dark"
+          className="mt-6 inline-flex h-12 items-center rounded-full bg-pine px-7 font-semibold text-mist hover:bg-pine-dark"
         >
           Browse products
         </Link>
@@ -90,7 +90,7 @@ export default function CartPage() {
                 <div className="flex items-start justify-between gap-2">
                   <Link
                     href={`/products/${product.slug}`}
-                    className="font-semibold leading-snug hover:text-terra"
+                    className="font-semibold leading-snug hover:text-pine"
                   >
                     {product.name}
                   </Link>
@@ -98,7 +98,7 @@ export default function CartPage() {
                     type="button"
                     aria-label="Remove"
                     onClick={() => remove(item.slug)}
-                    className="text-ink-soft hover:text-terra text-sm"
+                    className="text-ink-soft hover:text-pine text-sm"
                   >
                     ✕
                   </button>
@@ -122,12 +122,12 @@ export default function CartPage() {
                   <p className="font-bold">{formatINR(lineTotal)}</p>
                 </div>
                 {overStock && (
-                  <p className="mt-1 text-xs font-semibold text-terra">
+                  <p className="mt-1 text-xs font-semibold text-pine">
                     Only {product.availablePackets} in stock — reduce quantity
                   </p>
                 )}
                 {!product.inStock && (
-                  <p className="mt-1 text-xs font-semibold text-terra">
+                  <p className="mt-1 text-xs font-semibold text-pine">
                     Currently out of stock — remove this item to continue
                   </p>
                 )}
@@ -151,7 +151,7 @@ export default function CartPage() {
         </p>
         <Link
           href="/checkout"
-          className="mt-4 flex h-12 items-center justify-center rounded-full bg-terra font-semibold text-cream hover:bg-terra-dark"
+          className="mt-4 flex h-12 items-center justify-center rounded-full bg-pine font-semibold text-mist hover:bg-pine-dark"
         >
           Continue to checkout
         </Link>

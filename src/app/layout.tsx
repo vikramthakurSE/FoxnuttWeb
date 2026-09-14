@@ -23,7 +23,7 @@ export const metadata: Metadata = {
     template: "%s · Nutty Nirvana Snacks",
   },
   description:
-    "Hand-picked, sun-dried fox nuts (makhana) from Katihar, Bihar. Order Holiday, Laddu Gopal, Gopala and loose bulk makhana directly from us.",
+    "Hand-picked, sun-dried fox nuts (makhana). Order Holiday, Laddu Gopal, Gopala and loose bulk makhana directly from us.",
 };
 
 export const viewport: Viewport = {

@@ -1,32 +1,58 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useLayoutEffect, useRef, useState, type MouseEvent } from "react";
 import type { SfProduct } from "@/lib/salesforce";
 import { formatINR } from "@/lib/format";
+import { dropOntoCard, liftCard, reducedMotion } from "@/lib/productMorph";
 import { useCart } from "./CartProvider";
 import ProductImage from "./ProductImage";
 
 export default function ProductCard({ product }: { product: SfProduct }) {
   const { add } = useCart();
+  const router = useRouter();
   const [added, setAdded] = useState(false);
+  const tileRef = useRef<HTMLDivElement>(null);
+  const opening = useRef(false);
 
   const out = !product.inStock;
+  const href = `/products/${product.slug}`;
+
+  // Back from the product page: open the tile out of its circle.
+  useLayoutEffect(() => {
+    if (tileRef.current) dropOntoCard(tileRef.current, product.slug);
+  }, [product.slug]);
+
+  // Turn the tile into a circle first; the product page grows out of it.
+  function open(e: MouseEvent) {
+    if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) {
+      return;
+    }
+    if (!tileRef.current || reducedMotion()) return;
+    e.preventDefault();
+    if (opening.current) return;
+    opening.current = true;
+    liftCard(tileRef.current, product.slug).finally(() => router.push(href));
+  }
 
   return (
     <div className="group rounded-2xl bg-card shadow-card border border-line overflow-hidden flex flex-col">
-      <Link href={`/products/${product.slug}`} className="block">
-        <ProductImage
-          slug={product.slug}
-          name={product.name}
-          packLabel={product.packLabel}
-          className="aspect-[4/3]"
-        />
+      <Link href={href} onClick={open} className="block">
+        <div ref={tileRef}>
+          <ProductImage
+            slug={product.slug}
+            name={product.name}
+            packLabel={product.packLabel}
+            className="aspect-[4/3]"
+          />
+        </div>
       </Link>
       <div className="p-4 flex flex-col gap-1.5 flex-1">
         <div className="flex items-start justify-between gap-2">
           <Link
-            href={`/products/${product.slug}`}
+            href={href}
+            onClick={open}
             className="font-display font-bold leading-snug hover:text-pine"
           >
             {product.name}

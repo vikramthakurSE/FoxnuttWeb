@@ -57,7 +57,7 @@ export default function OnlinePaymentPanel({
           href={`/api/orders/receipt?ref=${orderRef}`}
           target="_blank"
           rel="noopener noreferrer"
-          className={`rounded-full border border-ink/20 font-semibold hover:bg-cream-2 flex items-center justify-center gap-2 ${
+          className={`rounded-full border border-ink/20 font-semibold hover:bg-mist-2 flex items-center justify-center gap-2 ${
             compact ? "h-11 text-sm" : "h-12"
           }`}
         >
@@ -67,13 +67,13 @@ export default function OnlinePaymentPanel({
           <div className="mt-2 flex flex-col gap-2">
             <Link
               href="/orders"
-              className="h-12 rounded-full bg-terra font-semibold text-cream hover:bg-terra-dark flex items-center justify-center"
+              className="h-12 rounded-full bg-pine font-semibold text-mist hover:bg-pine-dark flex items-center justify-center"
             >
               View my orders
             </Link>
             <Link
               href="/products"
-              className="h-12 rounded-full border border-ink/20 font-semibold hover:bg-cream-2 flex items-center justify-center"
+              className="h-12 rounded-full border border-ink/20 font-semibold hover:bg-mist-2 flex items-center justify-center"
             >
               Continue shopping
             </Link>

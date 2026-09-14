@@ -100,7 +100,7 @@ export function WaitingFooter({
         type="button"
         onClick={onRecheck}
         disabled={checking}
-        className="mt-3 h-12 w-full rounded-full border border-ink/20 font-semibold hover:bg-cream-2 disabled:opacity-50"
+        className="mt-3 h-12 w-full rounded-full border border-ink/20 font-semibold hover:bg-mist-2 disabled:opacity-50"
       >
         {checking ? "Checking…" : "I have paid — check now"}
       </button>

@@ -17,7 +17,7 @@ export default function PaymentSuccess({
       <div className="relative mx-auto h-24 w-24">
         <span className="nn-ring absolute inset-0 rounded-full bg-leaf/20" />
         <span className="nn-ring nn-ring-2 absolute inset-0 rounded-full bg-leaf/15" />
-        <div className="relative flex h-24 w-24 items-center justify-center rounded-full bg-leaf text-cream shadow-card">
+        <div className="relative flex h-24 w-24 items-center justify-center rounded-full bg-leaf text-mist shadow-card">
           <svg viewBox="0 0 52 52" className="h-12 w-12" aria-hidden="true">
             <path
               className="nn-tick"

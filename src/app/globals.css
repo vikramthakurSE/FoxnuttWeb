@@ -1,23 +1,24 @@
 @import "tailwindcss";
 
 @theme {
-  /* Nutty Nirvana catalogue palette */
-  --color-cream: #faf3e6;
-  --color-cream-2: #f3e8d2;
-  --color-card: #fffdf7;
-  --color-ink: #2e1f14;
-  --color-ink-soft: #6b5744;
-  --color-terra: #c2401f;
-  --color-terra-dark: #9e3115;
+  /* Nutty Nirvana palette: lotus-leaf green with a gold accent on ivory */
+  --color-mist: #f6f7f2;
+  --color-mist-2: #e9eee2;
+  --color-card: #ffffff;
+  --color-ink: #1b2a21;
+  --color-ink-soft: #56665b;
+  --color-pine: #1f6b45;
+  --color-pine-dark: #154d31;
   --color-gold: #b8862f;
-  --color-leaf: #5c7a1e;
-  --color-line: #e7d9bd;
+  --color-leaf: #4d7c2a;
+  --color-line: #dde3d6;
+  --color-danger: #b42318;
 
   --font-display: var(--font-fraunces), Georgia, "Times New Roman", serif;
   --font-body: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
 
-  --shadow-card: 0 1px 2px rgba(46, 31, 20, 0.06),
-    0 8px 24px -12px rgba(46, 31, 20, 0.18);
+  --shadow-card: 0 1px 2px rgba(27, 42, 33, 0.06),
+    0 8px 24px -12px rgba(27, 42, 33, 0.18);
 }
 
 html {
@@ -25,7 +26,7 @@ html {
 }
 
 body {
-  background: var(--color-cream);
+  background: var(--color-mist);
   color: var(--color-ink);
   font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;

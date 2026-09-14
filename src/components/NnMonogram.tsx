@@ -43,7 +43,7 @@ export default function NnCornerBadge() {
     <Link
       href="/"
       aria-label="Nutty Nirvana home"
-      className="fixed bottom-5 left-5 z-40 rounded-full shadow-card transition-transform hover:scale-105 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-terra"
+      className="fixed bottom-5 left-5 z-40 rounded-full shadow-card transition-transform hover:scale-105 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-pine"
     >
       <NnMark size={48} />
     </Link>

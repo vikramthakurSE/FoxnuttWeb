@@ -67,11 +67,11 @@ export default function ProductDetail({
 
           <div className="mt-2 text-sm">
             {out ? (
-              <span className="font-semibold text-terra">
+              <span className="font-semibold text-pine">
                 Out of stock — check back soon
               </span>
             ) : lowStock ? (
-              <span className="font-semibold text-terra">
+              <span className="font-semibold text-pine">
                 Only {product.availablePackets} left in stock
               </span>
             ) : (
@@ -117,10 +117,10 @@ export default function ProductDetail({
               }}
               className={`rounded-full px-7 h-12 font-semibold transition-colors ${
                 out || !live
-                  ? "bg-cream-2 text-ink-soft cursor-not-allowed"
+                  ? "bg-mist-2 text-ink-soft cursor-not-allowed"
                   : added
-                    ? "bg-leaf text-cream"
-                    : "bg-terra text-cream hover:bg-terra-dark"
+                    ? "bg-leaf text-mist"
+                    : "bg-pine text-mist hover:bg-pine-dark"
               }`}
             >
               {added ? "Added to cart ✓" : "Add to cart"}
@@ -132,7 +132,7 @@ export default function ProductDetail({
                 add(product.slug, qty);
                 router.push("/checkout");
               }}
-              className="rounded-full border border-ink/20 px-7 h-12 font-semibold hover:bg-cream-2 transition-colors disabled:opacity-40"
+              className="rounded-full border border-ink/20 px-7 h-12 font-semibold hover:bg-mist-2 transition-colors disabled:opacity-40"
             >
               Buy now
             </button>

@@ -1,12 +1,12 @@
 export default function Footer() {
   return (
-    <footer className="mt-16 bg-ink text-cream/90">
+    <footer className="mt-16 bg-ink text-mist/90">
       <div className="mx-auto max-w-5xl px-4 py-10 grid gap-8 sm:grid-cols-3 text-sm">
         <div>
-          <p className="font-display text-lg font-bold text-cream">
+          <p className="font-display text-lg font-bold text-mist">
             Nutty Nirvana Snacks
           </p>
-          <p className="mt-2 text-cream/70">
+          <p className="mt-2 text-mist/70">
             Katihar, Bihar 854105
             <br />
             Wholesome. Natural. Delightful.
@@ -43,7 +43,7 @@ export default function Footer() {
           <p className="font-semibold text-gold uppercase tracking-wide text-xs">
             Good to know
           </p>
-          <ul className="mt-2 space-y-1.5 text-cream/70">
+          <ul className="mt-2 space-y-1.5 text-mist/70">
             <li>FSSAI registered · food safety compliant</li>
             <li>Hand-picked &amp; sun-dried in Bihar</li>
             <li>Payment on delivery / as agreed</li>
@@ -51,7 +51,7 @@ export default function Footer() {
           </ul>
         </div>
       </div>
-      <div className="border-t border-cream/10 py-4 text-center text-xs text-cream/50">
+      <div className="border-t border-mist/10 py-4 text-center text-xs text-mist/50">
         © {new Date().getFullYear()} Nutty Nirvana Snacks
       </div>
     </footer>

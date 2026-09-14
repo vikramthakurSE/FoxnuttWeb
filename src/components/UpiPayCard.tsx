@@ -35,7 +35,7 @@ export default function UpiPayCard({
   }
 
   return (
-    <div className="rounded-xl bg-cream-2 p-4 text-center">
+    <div className="rounded-xl bg-mist-2 p-4 text-center">
       <p className="text-sm font-semibold">Pay {formatINR(amount)} by UPI</p>
       <p className="mt-0.5 text-xs text-ink-soft">
         Scan with PhonePe, Google Pay, Paytm or any UPI app
@@ -64,7 +64,7 @@ export default function UpiPayCard({
           <button
             type="button"
             onClick={() => void copyUpiId()}
-            className="h-9 shrink-0 rounded-full bg-terra px-4 text-xs font-semibold text-cream hover:bg-terra-dark"
+            className="h-9 shrink-0 rounded-full bg-pine px-4 text-xs font-semibold text-mist hover:bg-pine-dark"
           >
             {copied ? "Copied ✓" : "Copy"}
           </button>

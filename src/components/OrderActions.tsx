@@ -66,14 +66,14 @@ export default function OrderActions({
         <button
           type="button"
           onClick={() => setMode("modify")}
-          className="h-10 flex-1 rounded-full border border-line text-sm font-semibold text-ink hover:bg-cream-2"
+          className="h-10 flex-1 rounded-full border border-line text-sm font-semibold text-ink hover:bg-mist-2"
         >
           Modify
         </button>
         <button
           type="button"
           onClick={() => setMode("confirmCancel")}
-          className="h-10 flex-1 rounded-full border border-terra/40 text-sm font-semibold text-terra hover:bg-terra/5"
+          className="h-10 flex-1 rounded-full border border-pine/40 text-sm font-semibold text-pine hover:bg-pine/5"
         >
           Cancel order
         </button>
@@ -83,7 +83,7 @@ export default function OrderActions({
 
   if (mode === "confirmCancel") {
     return (
-      <div className="mt-3 rounded-xl border border-terra/30 bg-terra/5 p-3">
+      <div className="mt-3 rounded-xl border border-pine/30 bg-pine/5 p-3">
         <p className="text-sm">
           Cancel <span className="font-semibold">{order.saleName}</span>? We
           will confirm this on your WhatsApp.
@@ -99,7 +99,7 @@ export default function OrderActions({
                 "Could not cancel that order."
               )
             }
-            className="h-10 flex-1 rounded-full bg-terra text-sm font-semibold text-cream hover:bg-terra-dark disabled:opacity-50"
+            className="h-10 flex-1 rounded-full bg-pine text-sm font-semibold text-mist hover:bg-pine-dark disabled:opacity-50"
           >
             {busy ? "Cancelling…" : "Yes, cancel it"}
           </button>
@@ -107,18 +107,18 @@ export default function OrderActions({
             type="button"
             disabled={busy}
             onClick={() => setMode("idle")}
-            className="h-10 flex-1 rounded-full border border-line text-sm font-semibold hover:bg-cream-2"
+            className="h-10 flex-1 rounded-full border border-line text-sm font-semibold hover:bg-mist-2"
           >
             Keep order
           </button>
         </div>
-        {error && <p className="mt-2 text-sm text-terra-dark">{error}</p>}
+        {error && <p className="mt-2 text-sm text-danger">{error}</p>}
       </div>
     );
   }
 
   return (
-    <div className="mt-3 rounded-xl border border-line bg-cream-2 p-3">
+    <div className="mt-3 rounded-xl border border-line bg-mist-2 p-3">
       <p className="text-sm font-semibold">Change quantities</p>
       {lines.map((i) => {
         const id = i.lineId as string;
@@ -161,7 +161,7 @@ export default function OrderActions({
       </div>
 
       {allZero && (
-        <p className="mt-2 text-xs text-terra-dark">
+        <p className="mt-2 text-xs text-pine-dark">
           An order needs at least one item — use Cancel order instead.
         </p>
       )}
@@ -177,7 +177,7 @@ export default function OrderActions({
               "Could not update that order."
             )
           }
-          className="h-10 flex-1 rounded-full bg-terra text-sm font-semibold text-cream hover:bg-terra-dark disabled:opacity-50"
+          className="h-10 flex-1 rounded-full bg-pine text-sm font-semibold text-mist hover:bg-pine-dark disabled:opacity-50"
         >
           {busy ? "Saving…" : "Save changes"}
         </button>
@@ -185,12 +185,12 @@ export default function OrderActions({
           type="button"
           disabled={busy}
           onClick={() => setMode("idle")}
-          className="h-10 flex-1 rounded-full border border-line text-sm font-semibold hover:bg-cream-2"
+          className="h-10 flex-1 rounded-full border border-line text-sm font-semibold hover:bg-mist-2"
         >
           Discard
         </button>
       </div>
-      {error && <p className="mt-2 text-sm text-terra-dark">{error}</p>}
+      {error && <p className="mt-2 text-sm text-danger">{error}</p>}
     </div>
   );
 }

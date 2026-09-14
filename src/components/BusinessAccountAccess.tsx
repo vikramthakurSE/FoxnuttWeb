@@ -75,7 +75,7 @@ export default function BusinessAccountAccess({
 
           {view === "notFound" && (
             <div className="text-center">
-              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-terra/10 text-2xl">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-pine/10 text-2xl">
                 !
               </div>
               <p className="mt-3 text-sm text-ink-soft">
@@ -85,7 +85,7 @@ export default function BusinessAccountAccess({
               <button
                 type="button"
                 onClick={() => setView("register")}
-                className="mt-4 h-12 w-full rounded-full bg-terra font-semibold text-cream hover:bg-terra-dark"
+                className="mt-4 h-12 w-full rounded-full bg-pine font-semibold text-mist hover:bg-pine-dark"
               >
                 Register
               </button>
@@ -142,7 +142,7 @@ export default function BusinessAccountAccess({
                 ! Here is your Business ID.
               </p>
 
-              <div className="mt-4 rounded-xl border-2 border-dashed border-terra/40 bg-terra/5 px-4 py-4">
+              <div className="mt-4 rounded-xl border-2 border-dashed border-pine/40 bg-pine/5 px-4 py-4">
                 <p className="text-xs font-semibold uppercase tracking-wide text-ink-soft">
                   Your Business ID
                 </p>
@@ -159,7 +159,7 @@ export default function BusinessAccountAccess({
                     .then(() => setCopied(true))
                     .catch(() => {});
                 }}
-                className="mt-3 h-11 w-full rounded-full border border-line text-sm font-semibold text-ink hover:bg-cream-2"
+                className="mt-3 h-11 w-full rounded-full border border-line text-sm font-semibold text-ink hover:bg-mist-2"
               >
                 {copied ? "Copied ✓" : "Copy ID"}
               </button>
@@ -173,7 +173,7 @@ export default function BusinessAccountAccess({
               <button
                 type="button"
                 onClick={() => onLoggedIn(registeredAccount)}
-                className="mt-4 h-12 w-full rounded-full bg-terra font-semibold text-cream hover:bg-terra-dark"
+                className="mt-4 h-12 w-full rounded-full bg-pine font-semibold text-mist hover:bg-pine-dark"
               >
                 Start shopping
               </button>
@@ -205,14 +205,14 @@ export default function BusinessAccountAccess({
           <button
             type="button"
             onClick={() => setView("request")}
-            className="h-11 w-full rounded-full border border-line font-semibold text-ink hover:bg-cream-2"
+            className="h-11 w-full rounded-full border border-line font-semibold text-ink hover:bg-mist-2"
           >
             Request code
           </button>
           <button
             type="button"
             onClick={() => setView("register")}
-            className="h-11 w-full rounded-full border border-terra/40 font-semibold text-terra hover:bg-terra/5"
+            className="h-11 w-full rounded-full border border-pine/40 font-semibold text-pine hover:bg-pine/5"
           >
             New here? Register
           </button>

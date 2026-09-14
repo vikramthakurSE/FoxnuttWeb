@@ -26,7 +26,7 @@ export default function QtyStepper({
       <button
         type="button"
         aria-label="Decrease quantity"
-        className={`${btn} font-bold text-ink-soft hover:bg-cream-2 disabled:opacity-30`}
+        className={`${btn} font-bold text-ink-soft hover:bg-mist-2 disabled:opacity-30`}
         disabled={value <= min}
         onClick={() => onChange(clamp(value - 1))}
       >
@@ -40,7 +40,7 @@ export default function QtyStepper({
       <button
         type="button"
         aria-label="Increase quantity"
-        className={`${btn} font-bold text-ink-soft hover:bg-cream-2 disabled:opacity-30`}
+        className={`${btn} font-bold text-ink-soft hover:bg-mist-2 disabled:opacity-30`}
         disabled={max !== undefined && value >= max}
         onClick={() => onChange(clamp(value + 1))}
       >

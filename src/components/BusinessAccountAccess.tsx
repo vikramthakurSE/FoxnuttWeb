@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import BusinessCodeLogin, { type LoggedInAccount } from "./BusinessCodeLogin";
+import BusinessCodeLogin, { type CodeStage, type LoggedInAccount } from "./BusinessCodeLogin";
 import RequestCode from "./RequestCode";
 import RegisterForm from "./RegisterForm";
 
@@ -19,6 +19,8 @@ export default function BusinessAccountAccess({
   loginSubtitle = "Use the business code we sent you on WhatsApp.",
   footer,
   titleId,
+  continueLabel,
+  onStageChange,
 }: {
   onLoggedIn: (account: LoggedInAccount) => void;
   /** Heading shown above the code field, before any sub-view is entered. */
@@ -28,12 +30,17 @@ export default function BusinessAccountAccess({
   footer?: React.ReactNode;
   /** Applied to every view's heading, so a wrapping dialog's aria-labelledby keeps working across views. */
   titleId?: string;
+  /** Label of the green button shown after a code verifies. */
+  continueLabel?: string;
+  /** Lets the wrapping card react to the code login (e.g. wobble on success). */
+  onStageChange?: (stage: CodeStage) => void;
 }) {
   const [view, setView] = useState<View>("login");
   const [knownPhone, setKnownPhone] = useState("");
   const [registeredAccount, setRegisteredAccount] =
     useState<LoggedInAccount | null>(null);
   const [copied, setCopied] = useState(false);
+  const [codeStage, setCodeStage] = useState<CodeStage>("idle");
 
   const titles: Record<Exclude<View, "login">, string> = {
     request: "Request your code",
@@ -177,14 +184,23 @@ export default function BusinessAccountAccess({
     );
   }
 
+  const codeVerified = codeStage === "verified";
+
   return (
     <div>
-      <h2 id={titleId} className="font-display text-xl font-bold">{loginTitle}</h2>
-      {loginSubtitle && (
-        <p className="mt-1 text-sm text-ink-soft">{loginSubtitle}</p>
-      )}
-      <div className="mt-4">
-        <BusinessCodeLogin onLoggedIn={onLoggedIn} />
+      <BusinessCodeLogin
+        title={loginTitle}
+        subtitle={loginSubtitle}
+        titleId={titleId}
+        continueLabel={continueLabel}
+        onLoggedIn={onLoggedIn}
+        onStageChange={(s) => {
+          setCodeStage(s);
+          onStageChange?.(s);
+        }}
+      />
+      <div className={`nn-access-extra ${codeVerified ? "nn-access-extra-out" : ""}`}>
+        <div>
         <div className="mt-5 grid gap-2 border-t border-line pt-4">
           <button
             type="button"
@@ -202,7 +218,13 @@ export default function BusinessAccountAccess({
           </button>
         </div>
         {footer}
+        </div>
       </div>
+      <style>{`
+        .nn-access-extra { display: grid; grid-template-rows: 1fr; transition: grid-template-rows .4s cubic-bezier(.4,0,.2,1), opacity .25s ease; }
+        .nn-access-extra > div { overflow: hidden; }
+        .nn-access-extra-out { grid-template-rows: 0fr; opacity: 0; pointer-events: none; }
+      `}</style>
     </div>
   );
 }

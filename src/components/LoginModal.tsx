@@ -31,6 +31,7 @@ export default function LoginModal({
   // header, since "Start shopping" is not the only way out of the dialog.
   const [justRegistered, setJustRegistered] =
     useState<LoggedInAccount | null>(null);
+  const [codeVerified, setCodeVerified] = useState(false);
 
   function dismiss() {
     if (justRegistered) onLoggedIn(justRegistered);
@@ -42,6 +43,7 @@ export default function LoginModal({
     if (open) {
       setResetKey((k) => k + 1);
       setJustRegistered(null);
+      setCodeVerified(false);
     }
   }, [open]);
 
@@ -75,7 +77,7 @@ export default function LoginModal({
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="relative w-full max-w-sm rounded-2xl border border-line bg-card p-6 shadow-2xl"
+        className={`relative w-full max-w-sm rounded-3xl border border-line bg-card p-7 shadow-2xl animate-[nnDialogIn_.35s_cubic-bezier(.34,1.3,.64,1)] ${codeVerified ? "nn-card-wobble" : ""}`}
       >
         <button
           type="button"
@@ -99,6 +101,8 @@ export default function LoginModal({
         <BusinessAccountAccess
           key={resetKey}
           titleId="nn-login-title"
+          continueLabel="Start shopping"
+          onStageChange={(st) => setCodeVerified(st === "verified")}
           onLoggedIn={(a) => {
             setJustRegistered(a);
             onLoggedIn(a);

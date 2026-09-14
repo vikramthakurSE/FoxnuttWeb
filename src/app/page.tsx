@@ -31,10 +31,7 @@ export default async function HomePage() {
     <div>
       {/* Hero */}
       <section className="mx-auto max-w-5xl px-4 pt-12 pb-10 sm:pt-20 text-center">
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gold">
-          Katihar, Bihar · Est. quality since day one
-        </p>
-        <h1 className="mt-3 font-display text-4xl sm:text-6xl font-black leading-tight">
+        <h1 className="font-display text-4xl sm:text-6xl font-black leading-tight">
           <span className="text-pine">Nutty Nirvana</span>
           <br />
           Premium Makhana

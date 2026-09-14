@@ -1,5 +1,6 @@
 "use client";
 
+import Spinner from "@/components/Spinner";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import type { SfPastOrder } from "@/lib/salesforce";
@@ -65,8 +66,9 @@ export default function OrdersPage() {
 
   if (state === "loading") {
     return (
-      <div className="mx-auto max-w-3xl px-4 py-16 text-center text-ink-soft">
-        Loading your orders…
+      <div role="status" className="mx-auto flex max-w-3xl flex-col items-center px-4 py-16 text-center text-ink-soft">
+        <Spinner size={32} className="text-pine" />
+        <p className="mt-3">Loading your orders…</p>
       </div>
     );
   }

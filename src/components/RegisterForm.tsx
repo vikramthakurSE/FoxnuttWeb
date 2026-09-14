@@ -1,5 +1,6 @@
 "use client";
 
+import { BusyLabel } from "@/components/Spinner";
 import { useMemo, useState } from "react";
 import { INDIAN_STATES, citiesFor } from "@/lib/india";
 
@@ -198,7 +199,7 @@ export default function RegisterForm({
         disabled={busy || !canSubmit}
         className="mt-4 h-12 w-full rounded-full bg-pine font-semibold text-mist hover:bg-pine-dark disabled:opacity-50"
       >
-        {busy ? "Registering…" : "Register"}
+        {busy ? <BusyLabel>Registering</BusyLabel> : "Register"}
       </button>
       <p className="mt-2 text-center text-xs text-ink-soft">
         We&apos;ll send your business code to this WhatsApp number.

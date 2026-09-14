@@ -2,15 +2,15 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { SfPaymentDue, SfProduct } from "@/lib/salesforce";
+import type { SfPaymentDue, SfProduct, SfSavedAddress } from "@/lib/salesforce";
 import { formatINR } from "@/lib/format";
 import { useCart } from "@/components/CartProvider";
-import type { LoggedInAccount } from "@/components/BusinessCodeLogin";
 import BusinessAccountAccess from "@/components/BusinessAccountAccess";
 import GstinVerify, { type GstinVerifyResult } from "@/components/GstinVerify";
 import PaymentDueBlock from "@/components/PaymentDueBlock";
 import OnlinePaymentPanel from "@/components/OnlinePaymentPanel";
 import PlaceOrderButton, { type PlaceOrderButtonHandle } from "@/components/PlaceOrderButton";
+import Spinner from "@/components/Spinner";
 
 type Step = "identify" | "details" | "done";
 
@@ -29,6 +29,11 @@ export default function CheckoutPage() {
   const { items, clear, ready } = useCart();
   const [products, setProducts] = useState<SfProduct[] | null>(null);
   const [step, setStep] = useState<Step>("identify");
+  // True while checkout asks the backend who is signed in, whether a
+  // payment is overdue, and which addresses are saved. Nothing else renders
+  // until it answers, so the customer never sees login → details → pay-first
+  // flash past one after another.
+  const [booting, setBooting] = useState(true);
   const [phone, setPhone] = useState<string | null>(null);
   const [code, setCode] = useState<string | null>(null);
   const [accountName, setAccountName] = useState<string | null>(null);
@@ -40,6 +45,10 @@ export default function CheckoutPage() {
   const [name, setName] = useState("");
   const [businessName, setBusinessName] = useState("");
   const [address, setAddress] = useState("");
+  const [savedAddresses, setSavedAddresses] = useState<SfSavedAddress[]>([]);
+  // Index into savedAddresses, or "new" for an address typed here.
+  const [addressChoice, setAddressChoice] = useState<number | "new">("new");
+  const addressRef = useRef<HTMLTextAreaElement>(null);
   const [gstin, setGstin] = useState("");
   const [note, setNote] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("online");
@@ -71,13 +80,6 @@ export default function CheckoutPage() {
     }
   }, []);
 
-  useEffect(() => {
-    if (!code) return;
-    void fetchDue().then((d) => {
-      if (d && d.overdue.length > 0) setDue(d);
-    });
-  }, [code, fetchDue]);
-
   // Recheck from the pay-first panel. Only reports; the panel decides when
   // to hand back to the form so it can show its "payment received" screen.
   const recheckDue = useCallback(async (): Promise<boolean> => {
@@ -85,29 +87,66 @@ export default function CheckoutPage() {
     return d !== null && d.overdue.length === 0;
   }, [fetchDue]);
 
-  // Already logged in with a business code in this browser? Skip ahead.
+  // One backend round-trip decides the first screen: pay-first, delivery
+  // details (prefilled), or login. Also re-run right after a code login.
+  const bootstrap = useCallback(async () => {
+    setBooting(true);
+    const started = Date.now();
+    try {
+      const res = await fetch("/api/checkout/bootstrap", { cache: "no-store" });
+      const d = (await res.json()) as {
+        session: null | {
+          phone: string;
+          code?: string;
+          accountName?: string;
+          name?: string;
+          gstinVerified?: boolean;
+          gstinLegalName?: string | null;
+        };
+        due: SfPaymentDue;
+        addresses: SfSavedAddress[];
+      };
+      // Keep the loader up long enough to read as deliberate, not a flicker.
+      const wait = 500 - (Date.now() - started);
+      if (wait > 0) await new Promise((r) => setTimeout(r, wait));
+
+      if (!d.session?.phone) {
+        setStep("identify");
+        return;
+      }
+      setPhone(d.session.phone);
+      setCode(d.session.code ?? null);
+      setAccountName(d.session.accountName ?? null);
+      if (d.session.name) setName(d.session.name);
+      if (d.session.gstinVerified) {
+        setGstinVerified(true);
+        setGstinLegalName(d.session.gstinLegalName ?? null);
+      }
+      const saved = d.addresses ?? [];
+      setSavedAddresses(saved);
+      if (saved.length > 0) {
+        setAddressChoice(0);
+        setAddress(saved[0].address);
+      } else {
+        setAddressChoice("new");
+      }
+      setDue(d.due && d.due.overdue.length > 0 ? d.due : null);
+      setStep("details");
+    } catch {
+      // Unknown state: fall back to login, which re-checks everything.
+      setStep("identify");
+    } finally {
+      setBooting(false);
+    }
+  }, []);
+
   useEffect(() => {
-    fetch("/api/session")
-      .then((r) => r.json())
-      .then((d) => {
-        if (d.session?.phone) {
-          setPhone(d.session.phone as string);
-          setCode((d.session.code as string) ?? null);
-          setAccountName((d.session.accountName as string) ?? null);
-          if (d.session.name) setName(d.session.name as string);
-          if (d.session.gstinVerified) {
-            setGstinVerified(true);
-            setGstinLegalName((d.session.gstinLegalName as string) ?? null);
-          }
-          setStep((s) => (s === "identify" ? "details" : s));
-        }
-      })
-      .catch(() => {});
+    void bootstrap();
     fetch("/api/catalog")
       .then((r) => r.json())
       .then((d) => setProducts(d.products as SfProduct[]))
       .catch(() => setProducts([]));
-  }, []);
+  }, [bootstrap]);
 
   const rows =
     products === null
@@ -239,8 +278,24 @@ export default function CheckoutPage() {
         </>
       )}
 
+      {/* Loader while the backend decides which screen to show */}
+      {booting && step !== "done" && (
+        <div
+          role="status"
+          className="mt-6 flex flex-col items-center rounded-2xl border border-line bg-card px-6 py-12 text-center shadow-card"
+        >
+          <Spinner size={36} className="text-pine" />
+          <p className="mt-4 font-display text-lg font-bold">
+            Getting your checkout ready
+          </p>
+          <p className="mt-1 text-sm text-ink-soft">
+            Checking your account, payments and saved addresses…
+          </p>
+        </div>
+      )}
+
       {/* Step 1 — identify: business code, or first-time details */}
-      {step === "identify" && (
+      {!booting && step === "identify" && (
         <div className={`mt-6 rounded-2xl bg-card border border-line shadow-card p-6 ${codeVerified ? "nn-card-wobble" : ""}`}>
           {!firstTime ? (
             <BusinessAccountAccess
@@ -248,17 +303,9 @@ export default function CheckoutPage() {
               onStageChange={(st) => setCodeVerified(st === "verified")}
               loginTitle="Enter your business code"
               loginSubtitle="We sent this to you on WhatsApp when we opened your account."
-              onLoggedIn={(a: LoggedInAccount) => {
-                setCode(a.code);
-                setAccountName(a.accountName);
-                if (a.accountName) setName(a.accountName);
-                if (a.address) setAddress(a.address);
-                if (a.gstin) setGstin(a.gstin);
-                if (a.gstinVerified) {
-                  setGstinVerified(true);
-                  setGstinLegalName(a.gstinLegalName);
-                }
-                setStep("details");
+              onLoggedIn={() => {
+                setCodeVerified(false);
+                void bootstrap();
               }}
               footer={
                 <div className="mt-5 border-t border-line pt-4 text-center">
@@ -330,7 +377,7 @@ export default function CheckoutPage() {
       )}
 
       {/* Pay-first gate — an old delivery is still unpaid */}
-      {step === "details" && due && (
+      {!booting && step === "details" && due && (
         <PaymentDueBlock
           due={due}
           onRecheck={recheckDue}
@@ -339,7 +386,7 @@ export default function CheckoutPage() {
       )}
 
       {/* Step 2 — details + place order */}
-      {step === "details" && !due && (
+      {!booting && step === "details" && !due && (
         <form
           className="mt-6 rounded-2xl bg-card border border-line shadow-card p-5"
           onSubmit={(e) => {
@@ -395,12 +442,93 @@ export default function CheckoutPage() {
           </label>
           <textarea
             id="nn-address"
+            ref={addressRef}
             value={address}
-            onChange={(e) => setAddress(e.target.value)}
+            onChange={(e) => {
+              const v = e.target.value;
+              setAddress(v);
+              if (addressChoice !== "new" && v !== savedAddresses[addressChoice]?.address) {
+                setAddressChoice("new");
+              }
+            }}
             required
             rows={3}
+            placeholder={addressChoice === "new" && savedAddresses.length > 0 ? "Type the new delivery address" : undefined}
             className="mt-1.5 w-full rounded-xl border border-line bg-card px-4 py-3 outline-none focus:border-pine"
           />
+
+          {savedAddresses.length > 0 && (
+            <div className="mt-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-ink-soft">
+                Saved addresses
+              </p>
+              <ul className="mt-2 space-y-2" role="radiogroup" aria-label="Saved addresses">
+                {savedAddresses.map((a, i) => {
+                  const active = addressChoice === i;
+                  return (
+                    <li key={a.address}>
+                      <button
+                        type="button"
+                        role="radio"
+                        aria-checked={active}
+                        onClick={() => {
+                          setAddressChoice(i);
+                          setAddress(a.address);
+                        }}
+                        className={`flex w-full items-start gap-3 rounded-xl border px-3.5 py-3 text-left text-sm transition-colors ${
+                          active
+                            ? "border-pine bg-pine/5 ring-1 ring-pine"
+                            : "border-line bg-card hover:bg-mist-2"
+                        }`}
+                      >
+                        <span
+                          aria-hidden="true"
+                          className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border ${
+                            active ? "border-pine" : "border-ink-soft/50"
+                          }`}
+                        >
+                          {active && <span className="h-2 w-2 rounded-full bg-pine" />}
+                        </span>
+                        <span className="min-w-0">
+                          <span className="block whitespace-pre-line text-ink">{a.address}</span>
+                          <span className="mt-0.5 block text-xs text-ink-soft">
+                            {i === 0 && a.source === "order"
+                              ? "Used on your last order"
+                              : a.source === "order"
+                                ? "Used on a past order"
+                                : "Account address"}
+                          </span>
+                        </span>
+                      </button>
+                    </li>
+                  );
+                })}
+                <li>
+                  <button
+                    type="button"
+                    role="radio"
+                    aria-checked={addressChoice === "new"}
+                    onClick={() => {
+                      setAddressChoice("new");
+                      setAddress("");
+                      requestAnimationFrame(() => addressRef.current?.focus());
+                    }}
+                    className={`flex w-full items-center gap-3 rounded-xl border border-dashed px-3.5 py-3 text-left text-sm font-semibold transition-colors ${
+                      addressChoice === "new"
+                        ? "border-pine bg-pine/5 text-pine"
+                        : "border-line text-pine hover:bg-mist-2"
+                    }`}
+                  >
+                    <span aria-hidden="true" className="text-lg leading-none">+</span>
+                    Add a new address
+                  </button>
+                </li>
+              </ul>
+              <p className="mt-2 text-xs text-ink-soft">
+                A new address is saved with this order for next time.
+              </p>
+            </div>
+          )}
 
           {firstTime ? (
             <GstinVerify phone={typedPhone} onResolved={setGstinResolution} />

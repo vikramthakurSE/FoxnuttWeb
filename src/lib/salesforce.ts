@@ -303,6 +303,24 @@ export async function fetchPaymentDue(code: string): Promise<SfPaymentDue> {
   };
 }
 
+export interface SfSavedAddress {
+  address: string;
+  /** "order" = used on a past order; "account" = the account's own address. */
+  source: "order" | "account";
+  /** Date of the most recent order that used it, when known. */
+  lastUsed: string | null;
+}
+
+/** A client's saved delivery addresses, most recent first. */
+export async function fetchSavedAddresses(code: string): Promise<SfSavedAddress[]> {
+  const res = await sfFetch(
+    `/store/v1/addresses?code=${encodeURIComponent(code)}`
+  );
+  if (!res.ok) throw new Error(await readError(res));
+  const json = (await res.json()) as { addresses?: SfSavedAddress[] };
+  return json.addresses ?? [];
+}
+
 export interface SfCodeLookup {
   found: boolean;
   accountId?: string;

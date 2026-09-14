@@ -35,6 +35,7 @@ export default function CheckoutPage() {
   // First-time buyers have no code and type their own number instead.
   const [firstTime, setFirstTime] = useState(false);
   const [typedPhone, setTypedPhone] = useState("");
+  const [codeVerified, setCodeVerified] = useState(false);
 
   const [name, setName] = useState("");
   const [businessName, setBusinessName] = useState("");
@@ -240,9 +241,11 @@ export default function CheckoutPage() {
 
       {/* Step 1 — identify: business code, or first-time details */}
       {step === "identify" && (
-        <div className="mt-6 rounded-2xl bg-card border border-line shadow-card p-5">
+        <div className={`mt-6 rounded-2xl bg-card border border-line shadow-card p-6 ${codeVerified ? "nn-card-wobble" : ""}`}>
           {!firstTime ? (
             <BusinessAccountAccess
+              continueLabel="Continue to checkout"
+              onStageChange={(st) => setCodeVerified(st === "verified")}
               loginTitle="Enter your business code"
               loginSubtitle="We sent this to you on WhatsApp when we opened your account."
               onLoggedIn={(a: LoggedInAccount) => {

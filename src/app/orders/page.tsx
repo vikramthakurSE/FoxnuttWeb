@@ -23,6 +23,7 @@ export default function OrdersPage() {
   >("loading");
   const [orders, setOrders] = useState<SfPastOrder[]>([]);
   const [phone, setPhone] = useState<string | null>(null);
+  const [codeVerified, setCodeVerified] = useState(false);
   // Which unpaid online order has its payment panel open.
   const [payingRef, setPayingRef] = useState<string | null>(null);
 
@@ -74,12 +75,12 @@ export default function OrdersPage() {
     return (
       <div className="mx-auto max-w-md px-4 py-8">
         <h1 className="font-display text-3xl font-bold">My orders</h1>
-        <div className="mt-5 rounded-2xl bg-card border border-line shadow-card p-5">
-          <p className="mb-4 text-sm text-ink-soft">
-            Enter your business code to see your order history and live
-            status. It&apos;s in the welcome message we sent you on WhatsApp.
-          </p>
+        <div className={`mt-5 rounded-2xl bg-card border border-line shadow-card p-6 ${codeVerified ? "nn-card-wobble" : ""}`}>
           <BusinessCodeLogin
+            title="Enter your business code"
+            subtitle="See your order history and live delivery status."
+            continueLabel="View my orders"
+            onStageChange={(st) => setCodeVerified(st === "verified")}
             onLoggedIn={() => {
               setState("loading");
               void loadOrders();

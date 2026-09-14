@@ -71,26 +71,50 @@ export default function ProductDetail({
     const logoAtCard = {
       transform: `translate(${origin.x - (l.left + l.width / 2)}px, ${origin.y - (l.top + l.height / 2)}px) scale(${origin.d / l.width})`,
     };
-    const logoHome = { transform: "none" };
-
-    const inOrder = <T,>(start: T, end: T) =>
-      opening ? [start, end] : [end, start];
-    const timing: KeyframeAnimationOptions = {
-      duration: opening ? 720 : 560,
-      easing: MORPH_EASE,
-      fill: "forwards",
-    };
+    const logoHome = { transform: "translate(0px, 0px) scale(1) rotate(0deg)" };
 
     const bloom = createBloom(theme.from, product.slug);
     const disc = bloom.firstElementChild as HTMLElement;
     panel.style.backgroundColor = "transparent";
 
-    const done = Promise.all([
-      bloom.animate(inOrder(unclipped, panelOnly), timing).finished,
-      disc.animate(inOrder(dot, flood), timing).finished,
-      // Same timing as the disc so the logo stays centred inside it.
-      logo.animate(inOrder(logoAtCard, logoHome), timing).finished,
-    ]);
+    // Opening: the pouch first revolves once where the card was (disc held
+    // still behind it), then everything flies and zooms together. Every
+    // track shares the same offsets and duration so the logo stays centred
+    // inside the disc.
+    const SPIN_END = 0.4;
+    const hold = <T extends object>(frame: T) => ({
+      ...frame,
+      offset: SPIN_END,
+      easing: MORPH_EASE,
+    });
+    const timing: KeyframeAnimationOptions = opening
+      ? { duration: 820, easing: "linear", fill: "forwards" }
+      : { duration: 420, easing: MORPH_EASE, fill: "forwards" };
+
+    const done = Promise.all(
+      opening
+        ? [
+            bloom.animate([unclipped, hold(unclipped), panelOnly], timing)
+              .finished,
+            disc.animate([dot, hold(dot), flood], timing).finished,
+            logo.animate(
+              [
+                {
+                  transform: `${logoAtCard.transform} rotate(-360deg)`,
+                  easing: "cubic-bezier(.45,0,.25,1)",
+                },
+                hold({ transform: `${logoAtCard.transform} rotate(0deg)` }),
+                logoHome,
+              ],
+              timing,
+            ).finished,
+          ]
+        : [
+            bloom.animate([panelOnly, unclipped], timing).finished,
+            disc.animate([flood, dot], timing).finished,
+            logo.animate([logoHome, logoAtCard], timing).finished,
+          ],
+    );
 
     const wide = window.matchMedia("(min-width: 768px)").matches;
     const items =
@@ -107,15 +131,15 @@ export default function ProductDetail({
             { opacity: 1, transform: "none" },
           ],
           {
-            duration: 520,
-            delay: 300 + i * 70,
+            duration: 400,
+            delay: 330 + i * 45,
             easing: "cubic-bezier(.2,.7,.2,1)",
             fill: "backwards",
           },
         );
       } else {
         el.animate([{ opacity: 1 }, { opacity: 0 }], {
-          duration: 180,
+          duration: 140,
           fill: "forwards",
         });
       }
@@ -124,8 +148,8 @@ export default function ProductDetail({
       el.animate(
         opening ? [{ opacity: 0 }, { opacity: 1 }] : [{ opacity: 1 }, { opacity: 0 }],
         opening
-          ? { duration: 400, delay: 560, fill: "backwards" }
-          : { duration: 160, fill: "forwards" },
+          ? { duration: 300, delay: 620, fill: "backwards" }
+          : { duration: 120, fill: "forwards" },
       );
     });
 

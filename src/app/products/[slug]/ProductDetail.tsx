@@ -34,7 +34,7 @@ export default function ProductDetail({
   const panelRef = useRef<HTMLDivElement>(null);
   const logoRef = useRef<HTMLDivElement>(null);
   const detailsRef = useRef<HTMLDivElement>(null);
-  /** Where the product card's circle was, when we arrived from one. */
+  /** Where the product card's photo was, when we arrived from one. */
   const originRef = useRef<MorphOrigin | null>(null);
 
   const out = !product.inStock;
@@ -43,9 +43,9 @@ export default function ProductDetail({
   const kgForQty = (qty * product.packSizeGrams) / 1000;
 
   /**
-   * Grows the brand panel out of the card's circle ("open"), or shrinks it
-   * back into it ("close"). On close the shrunken disc and a copy of the
-   * logo stay on screen for the product card to pick up.
+   * Grows the brand panel out of the card's photo ("open"), or shrinks it
+   * back onto it ("close"). On close the shrunken layer and a copy of the
+   * photo stay on screen for the product card to pick up.
    */
   function runMorph(direction: "open" | "close"): Promise<unknown> {
     const origin = originRef.current!;
@@ -58,63 +58,32 @@ export default function ProductDetail({
     const p = panel.getBoundingClientRect();
     const l = logo.getBoundingClientRect();
 
-    const unclipped = { clipPath: "inset(0px 0px 0px 0px)" };
-    const panelOnly = {
-      clipPath: `inset(${p.top}px ${vw - p.right}px ${vh - p.bottom}px ${p.left}px)`,
+    const atCard = {
+      clipPath: `inset(${origin.top}px ${vw - origin.left - origin.width}px ${vh - origin.top - origin.height}px ${origin.left}px round 16px)`,
     };
-    const dot = {
-      clipPath: `circle(${origin.d / 2}px at ${origin.x}px ${origin.y}px)`,
-    };
-    const flood = {
-      clipPath: `circle(${Math.hypot(p.width, p.height) / 2}px at ${p.left + p.width / 2}px ${p.top + p.height / 2}px)`,
+    const atPanel = {
+      clipPath: `inset(${p.top}px ${vw - p.right}px ${vh - p.bottom}px ${p.left}px round 0px)`,
     };
     const logoAtCard = {
-      transform: `translate(${origin.x - (l.left + l.width / 2)}px, ${origin.y - (l.top + l.height / 2)}px) scale(${origin.d / l.width})`,
+      transform: `translate(${origin.left + origin.width / 2 - (l.left + l.width / 2)}px, ${origin.top + origin.height / 2 - (l.top + l.height / 2)}px) scale(${origin.width / l.width})`,
     };
-    const logoHome = { transform: "translate(0px, 0px) scale(1) rotate(0deg)" };
+    const logoHome = { transform: "translate(0px, 0px) scale(1)" };
+
+    const inOrder = <T,>(start: T, end: T) =>
+      opening ? [start, end] : [end, start];
+    const timing: KeyframeAnimationOptions = {
+      duration: opening ? 620 : 420,
+      easing: MORPH_EASE,
+      fill: "forwards",
+    };
 
     const bloom = createBloom(theme.from, product.slug);
-    const disc = bloom.firstElementChild as HTMLElement;
     panel.style.backgroundColor = "transparent";
 
-    // Opening: the pouch first revolves once where the card was (disc held
-    // still behind it), then everything flies and zooms together. Every
-    // track shares the same offsets and duration so the logo stays centred
-    // inside the disc.
-    const SPIN_END = 0.4;
-    const hold = <T extends object>(frame: T) => ({
-      ...frame,
-      offset: SPIN_END,
-      easing: MORPH_EASE,
-    });
-    const timing: KeyframeAnimationOptions = opening
-      ? { duration: 820, easing: "linear", fill: "forwards" }
-      : { duration: 420, easing: MORPH_EASE, fill: "forwards" };
-
-    const done = Promise.all(
-      opening
-        ? [
-            bloom.animate([unclipped, hold(unclipped), panelOnly], timing)
-              .finished,
-            disc.animate([dot, hold(dot), flood], timing).finished,
-            logo.animate(
-              [
-                {
-                  transform: `${logoAtCard.transform} rotate(-360deg)`,
-                  easing: "cubic-bezier(.45,0,.25,1)",
-                },
-                hold({ transform: `${logoAtCard.transform} rotate(0deg)` }),
-                logoHome,
-              ],
-              timing,
-            ).finished,
-          ]
-        : [
-            bloom.animate([panelOnly, unclipped], timing).finished,
-            disc.animate([flood, dot], timing).finished,
-            logo.animate([logoHome, logoAtCard], timing).finished,
-          ],
-    );
+    const done = Promise.all([
+      bloom.animate(inOrder(atCard, atPanel), timing).finished,
+      logo.animate(inOrder(logoAtCard, logoHome), timing).finished,
+    ]);
 
     const wide = window.matchMedia("(min-width: 768px)").matches;
     const items =
@@ -132,7 +101,7 @@ export default function ProductDetail({
           ],
           {
             duration: 400,
-            delay: 330 + i * 45,
+            delay: 200 + i * 45,
             easing: "cubic-bezier(.2,.7,.2,1)",
             fill: "backwards",
           },
@@ -148,7 +117,7 @@ export default function ProductDetail({
       el.animate(
         opening ? [{ opacity: 0 }, { opacity: 1 }] : [{ opacity: 1 }, { opacity: 0 }],
         opening
-          ? { duration: 300, delay: 620, fill: "backwards" }
+          ? { duration: 300, delay: 420, fill: "backwards" }
           : { duration: 120, fill: "forwards" },
       );
     });
@@ -176,7 +145,7 @@ export default function ProductDetail({
     });
   }
 
-  // Arriving from a product card: grow out of its circle before first paint.
+  // Arriving from a product card: grow out of its photo before first paint.
   useLayoutEffect(() => {
     const origin = takeLift(product.slug);
     if (!origin || reducedMotion()) return;
@@ -216,10 +185,6 @@ export default function ProductDetail({
           aria-hidden
           className="pointer-events-none absolute inset-0 overflow-hidden"
         >
-          <div
-            className="absolute left-1/2 top-[45%] aspect-square h-[80%] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-60 blur-3xl"
-            style={{ background: theme.to }}
-          />
           <span
             className="absolute -bottom-[0.18em] left-1/2 -translate-x-1/2 whitespace-nowrap font-display text-[24vw] font-black leading-none opacity-10 md:text-[12vw]"
             style={{ color: theme.accent }}
@@ -240,7 +205,7 @@ export default function ProductDetail({
         <div className="absolute inset-0 flex items-center justify-center">
           <div
             ref={logoRef}
-            className="relative isolate aspect-square w-[min(62%,38vh)] overflow-hidden rounded-full shadow-2xl ring-8 ring-white/15 md:w-[min(64%,62vh,30rem)]"
+            className="relative isolate aspect-[4/3] w-[min(82%,48vh)] overflow-hidden rounded-3xl shadow-2xl md:w-[min(78%,80vh,40rem)]"
           >
             <ProductImage
               slug={product.slug}

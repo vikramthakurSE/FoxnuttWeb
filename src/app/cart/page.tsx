@@ -65,10 +65,12 @@ export default function CartPage() {
   );
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-8">
+    <div className="mx-auto max-w-5xl px-4 py-8">
       <h1 className="font-display text-3xl font-bold">Your cart</h1>
 
-      <div className="mt-5 space-y-3">
+      {/* Wide screens: items on the left, total pinned on the right. */}
+      <div className="mt-5 grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
+      <div className="space-y-3">
         {rows.map(({ item, product }) => {
           const lineTotal =
             (product.pricePerKg * product.packSizeGrams * item.packets) / 1000;
@@ -137,7 +139,7 @@ export default function CartPage() {
         })}
       </div>
 
-      <div className="mt-6 rounded-2xl bg-card border border-line shadow-card p-4">
+      <aside className="rounded-2xl bg-card border border-line shadow-card p-4 lg:sticky lg:top-24">
         <div className="flex items-center justify-between text-sm text-ink-soft">
           <span>Total weight</span>
           <span>{formatKg(totalKg)}</span>
@@ -147,7 +149,7 @@ export default function CartPage() {
           <span>{formatINR(total)}</span>
         </div>
         <p className="mt-1 text-xs text-ink-soft">
-          Payment on delivery / as agreed — we&apos;ll confirm on WhatsApp.
+          Pay online by UPI or cash on delivery — updates arrive on WhatsApp.
         </p>
         <Link
           href="/checkout"
@@ -155,6 +157,7 @@ export default function CartPage() {
         >
           Continue to checkout
         </Link>
+      </aside>
       </div>
     </div>
   );

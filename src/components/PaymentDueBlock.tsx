@@ -47,40 +47,49 @@ export default function PaymentDueBlock({
   }
 
   return (
-    <div className="mt-6 rounded-2xl bg-card border border-pine/40 shadow-card p-5">
-      <h2 className="font-display text-xl font-bold text-pine-dark">
-        Please clear your pending payment first
-      </h2>
-      <p className="mt-2 text-sm text-ink-soft">
-        You have a payment pending for more than {due.daysLimit} days. Once
-        it is paid, you will be able to place your order.
-      </p>
+    <div className="rounded-2xl bg-card border border-pine/40 shadow-card p-5 sm:p-7">
+      {/* Phones: details, QR, then the waiting note. Wider screens: details
+          with the waiting note just under them on the left, the QR on the right,
+          so nothing needs scrolling past. */}
+      <div className="grid gap-6 md:grid-cols-2 md:grid-rows-[auto_1fr] md:gap-x-10">
+        <div className="md:col-start-1 md:row-start-1">
+          <h2 className="font-display text-xl sm:text-2xl font-bold text-pine-dark">
+            Please clear your pending payment first
+          </h2>
+          <p className="mt-2 text-sm text-ink-soft">
+            You have a payment pending for more than {due.daysLimit} days. Once
+            it is paid, you will be able to place your order.
+          </p>
 
-      <ul className="mt-4 divide-y divide-line rounded-xl border border-line text-sm">
-        {due.overdue.map((o) => (
-          <li key={o.saleId} className="flex items-center justify-between gap-3 px-4 py-2.5">
-            <div>
-              <p className="font-semibold">{o.saleName}</p>
-              <p className="text-xs text-ink-soft">
-                Delivered {formatDate(o.saleDate)} · {o.daysOld} days ago
-              </p>
-            </div>
-            <span className="font-semibold text-pine-dark shrink-0">
-              {formatINR(o.balanceDue)}
-            </span>
-          </li>
-        ))}
-        <li className="flex items-center justify-between px-4 py-2.5 font-bold">
-          <span>Total to pay</span>
-          <span>{formatINR(due.totalDue)}</span>
-        </li>
-      </ul>
+          <ul className="mt-4 divide-y divide-line rounded-xl border border-line text-sm">
+            {due.overdue.map((o) => (
+              <li key={o.saleId} className="flex items-center justify-between gap-3 px-4 py-2.5">
+                <div>
+                  <p className="font-semibold">{o.saleName}</p>
+                  <p className="text-xs text-ink-soft">
+                    Delivered {formatDate(o.saleDate)} · {o.daysOld} days ago
+                  </p>
+                </div>
+                <span className="font-semibold text-pine-dark shrink-0">
+                  {formatINR(o.balanceDue)}
+                </span>
+              </li>
+            ))}
+            <li className="flex items-center justify-between px-4 py-2.5 font-bold">
+              <span>Total to pay</span>
+              <span>{formatINR(due.totalDue)}</span>
+            </li>
+          </ul>
+        </div>
 
-      <div className="mt-5">
-        <UpiPayCard amount={due.totalDue} orderNames={orderNames} />
+        <div className="md:col-start-2 md:row-start-1 md:row-span-2">
+          <UpiPayCard amount={due.totalDue} orderNames={orderNames} />
+        </div>
+
+        <div className="md:col-start-1 md:row-start-2">
+          <WaitingFooter checking={checking} stillDue={stillDue} onRecheck={() => void recheck()} />
+        </div>
       </div>
-
-      <WaitingFooter checking={checking} stillDue={stillDue} onRecheck={() => void recheck()} />
     </div>
   );
 }

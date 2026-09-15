@@ -245,44 +245,27 @@ export default function CheckoutPage() {
   }
 
   return (
-    <div className="mx-auto max-w-md px-4 py-8">
+    <div className="mx-auto max-w-5xl px-4 py-8">
       {step !== "done" && (
-        <>
-          <h1 className="font-display text-3xl font-bold">Checkout</h1>
-
-          {/* Order summary */}
-          <div className="mt-4 rounded-2xl bg-card border border-line shadow-card p-4 text-sm">
-            {rows.map(({ item, product }) => (
-              <div
-                key={item.slug}
-                className="flex justify-between gap-2 py-1"
-              >
-                <span className="text-ink-soft">
-                  {product.name} × {item.packets}
-                </span>
-                <span className="font-semibold shrink-0">
-                  {formatINR(
-                    (product.pricePerKg *
-                      product.packSizeGrams *
-                      item.packets) /
-                      1000
-                  )}
-                </span>
-              </div>
-            ))}
-            <div className="mt-2 border-t border-line pt-2 flex justify-between font-bold text-base">
-              <span>Total</span>
-              <span>{formatINR(total)}</span>
-            </div>
-          </div>
-        </>
+        <h1 className="font-display text-3xl font-bold">Checkout</h1>
       )}
 
+      {/* Wide screens: the current step on the left, order summary pinned
+          on the right. The pay-first block takes the full width instead. */}
+      {step !== "done" && (
+        <div
+          className={`mt-5 grid items-start gap-6 ${
+            !booting && step === "details" && due
+              ? ""
+              : "lg:grid-cols-[minmax(0,1fr)_340px]"
+          }`}
+        >
+          <div className="min-w-0 lg:col-start-1 lg:row-start-1">
       {/* Loader while the backend decides which screen to show */}
-      {booting && step !== "done" && (
+      {booting && (
         <div
           role="status"
-          className="mt-6 flex flex-col items-center rounded-2xl border border-line bg-card px-6 py-12 text-center shadow-card"
+          className="flex flex-col items-center rounded-2xl border border-line bg-card px-6 py-12 text-center shadow-card"
         >
           <Spinner size={36} className="text-pine" />
           <p className="mt-4 font-display text-lg font-bold">
@@ -296,7 +279,7 @@ export default function CheckoutPage() {
 
       {/* Step 1 — identify: business code, or first-time details */}
       {!booting && step === "identify" && (
-        <div className={`mt-6 rounded-2xl bg-card border border-line shadow-card p-6 ${codeVerified ? "nn-card-wobble" : ""}`}>
+        <div className={`mx-auto max-w-lg rounded-2xl bg-card border border-line shadow-card p-6 ${codeVerified ? "nn-card-wobble" : ""}`}>
           {!firstTime ? (
             <BusinessAccountAccess
               continueLabel="Continue to checkout"
@@ -388,7 +371,7 @@ export default function CheckoutPage() {
       {/* Step 2 — details + place order */}
       {!booting && step === "details" && !due && (
         <form
-          className="mt-6 rounded-2xl bg-card border border-line shadow-card p-5"
+          className="rounded-2xl bg-card border border-line shadow-card p-5 sm:p-6"
           onSubmit={(e) => {
             e.preventDefault();
             if (!gstinBlocking) placeOrderRef.current?.trigger();
@@ -410,29 +393,36 @@ export default function CheckoutPage() {
             )}
           </p>
 
-          <label className="mt-4 block text-sm font-semibold" htmlFor="nn-name">
-            Your name *
-          </label>
-          <input
-            id="nn-name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            required
-            className="mt-1.5 h-12 w-full rounded-xl border border-line bg-card px-4 outline-none focus:border-pine"
-          />
+          <div className="grid gap-x-4 sm:grid-cols-2">
+            <div>
+              <label className="mt-4 block text-sm font-semibold" htmlFor="nn-name">
+                Your name *
+              </label>
+              <input
+                id="nn-name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+                className="mt-1.5 h-12 w-full rounded-xl border border-line bg-card px-4 outline-none focus:border-pine"
+              />
 
-          <label
-            className="mt-4 block text-sm font-semibold"
-            htmlFor="nn-business"
-          >
-            Shop / business name (optional)
-          </label>
-          <input
-            id="nn-business"
-            value={businessName}
-            onChange={(e) => setBusinessName(e.target.value)}
-            className="mt-1.5 h-12 w-full rounded-xl border border-line bg-card px-4 outline-none focus:border-pine"
-          />
+            </div>
+            <div>
+              <label
+                className="mt-4 block text-sm font-semibold"
+                htmlFor="nn-business"
+              >
+                Shop / business name (optional)
+              </label>
+              <input
+                id="nn-business"
+                value={businessName}
+                onChange={(e) => setBusinessName(e.target.value)}
+                className="mt-1.5 h-12 w-full rounded-xl border border-line bg-card px-4 outline-none focus:border-pine"
+              />
+
+            </div>
+          </div>
 
           <label
             className="mt-4 block text-sm font-semibold"
@@ -637,6 +627,42 @@ export default function CheckoutPage() {
         </form>
       )}
 
+          </div>
+
+          {!(!booting && step === "details" && due) && (
+            <aside className="lg:col-start-2 lg:row-start-1 lg:sticky lg:top-24">
+          {/* Order summary */}
+              <div className="rounded-2xl bg-card border border-line shadow-card p-4 text-sm">
+                {rows.map(({ item, product }) => (
+                  <div
+                    key={item.slug}
+                    className="flex justify-between gap-2 py-1"
+                  >
+                    <span className="text-ink-soft">
+                      {product.name} × {item.packets}
+                    </span>
+                    <span className="font-semibold shrink-0">
+                      {formatINR(
+                        (product.pricePerKg *
+                          product.packSizeGrams *
+                          item.packets) /
+                          1000
+                      )}
+                    </span>
+                  </div>
+                ))}
+                <div className="mt-2 border-t border-line pt-2 flex justify-between font-bold text-base">
+                  <span>Total</span>
+                  <span>{formatINR(total)}</span>
+                </div>
+              </div>
+            </aside>
+          )}
+        </div>
+      )}
+
+      {/* Confirmation screens stay a readable single column. */}
+      <div className="mx-auto max-w-md">
       {/* Step 3 — confirmation */}
       {step === "done" && placed && placed.paymentMethod === "online" && (
         <>
@@ -713,6 +739,7 @@ export default function CheckoutPage() {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }

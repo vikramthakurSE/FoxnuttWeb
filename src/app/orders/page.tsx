@@ -104,7 +104,7 @@ export default function OrdersPage() {
   }
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-8">
+    <div className="mx-auto max-w-3xl px-4 py-8">
       <div className="flex items-center justify-between gap-3">
         <h1 className="font-display text-3xl font-bold">My orders</h1>
         <div className="text-right text-sm">
@@ -130,7 +130,7 @@ export default function OrdersPage() {
           </Link>
         </div>
       ) : (
-        <div className="mt-5 grid items-start gap-3 lg:grid-cols-2">
+        <div className="mt-5 space-y-3">
           {orders.map((o) => (
             <div
               key={o.saleId}

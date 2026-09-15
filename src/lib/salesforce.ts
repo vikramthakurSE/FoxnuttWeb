@@ -289,6 +289,32 @@ export async function fetchOrderPayment(ref: string): Promise<SfOrderPayment> {
   return (await res.json()) as SfOrderPayment;
 }
 
+export interface SfOrderBalance {
+  found: boolean;
+  saleId?: string;
+  saleName?: string;
+  status?: string;
+  total?: number | null;
+  collected?: number | null;
+  balanceDue?: number;
+}
+
+/**
+ * Balance of one of a client's own orders, by sale id. Ownership is checked
+ * server-side by the business code — this cannot be used to read anyone
+ * else's order.
+ */
+export async function fetchOrderBalance(
+  code: string,
+  saleId: string
+): Promise<SfOrderBalance> {
+  const res = await sfFetch(
+    `/store/v1/order-balance?code=${encodeURIComponent(code)}&saleId=${encodeURIComponent(saleId)}`
+  );
+  if (!res.ok) throw new Error(await readError(res));
+  return (await res.json()) as SfOrderBalance;
+}
+
 /** Old unpaid orders that stop this business code from ordering. */
 export async function fetchPaymentDue(code: string): Promise<SfPaymentDue> {
   const res = await sfFetch(

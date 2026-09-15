@@ -14,6 +14,7 @@ import {
 } from "@/lib/productMorph";
 import { useCart } from "@/components/CartProvider";
 import ProductImage from "@/components/ProductImage";
+import ProductVideo from "@/components/ProductVideo";
 import QtyStepper from "@/components/QtyStepper";
 
 export default function ProductDetail({
@@ -29,6 +30,8 @@ export default function ProductDetail({
   const [qty, setQty] = useState(min);
   const [added, setAdded] = useState(false);
   const [closing, setClosing] = useState(false);
+  /** The entry animation has finished (or there wasn't one). */
+  const [revealed, setRevealed] = useState(false);
 
   const theme = brandTheme(product.slug);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -130,6 +133,8 @@ export default function ProductDetail({
         return;
       }
       const copy = logo.cloneNode(true) as HTMLElement;
+      // A cloned <video> would restart from blank; the photo is enough.
+      copy.querySelectorAll("video, button").forEach((n) => n.remove());
       Object.assign(copy.style, {
         position: "fixed",
         left: `${l.left}px`,
@@ -148,10 +153,13 @@ export default function ProductDetail({
   // Arriving from a product card: grow out of its photo before first paint.
   useLayoutEffect(() => {
     const origin = takeLift(product.slug);
-    if (!origin || reducedMotion()) return;
+    if (!origin || reducedMotion()) {
+      setRevealed(true);
+      return;
+    }
     originRef.current = origin;
     window.scrollTo({ top: 0, behavior: "instant" });
-    runMorph("open");
+    runMorph("open").then(() => setRevealed(true));
     // runMorph reads refs and props captured for this product only.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [product.slug]);
@@ -212,6 +220,11 @@ export default function ProductDetail({
               name={product.name}
               packLabel={product.packLabel}
               className="h-full w-full"
+            />
+            <ProductVideo
+              slug={product.slug}
+              name={product.name}
+              start={revealed}
             />
           </div>
         </div>

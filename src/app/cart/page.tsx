@@ -3,19 +3,28 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import type { SfProduct } from "@/lib/salesforce";
-import { formatINR, formatKg } from "@/lib/format";
+import { formatINR } from "@/lib/format";
+import { DEFAULT_DELIVERY_RULES, orderTotals, placeLabel, type DeliveryRules } from "@/lib/delivery";
 import { useCart } from "@/components/CartProvider";
+import { useDelivery } from "@/components/DeliveryProvider";
+import OrderTotals from "@/components/OrderTotals";
+import PincodeInline from "@/components/PincodeInline";
 import ProductImage from "@/components/ProductImage";
 import QtyStepper from "@/components/QtyStepper";
 
 export default function CartPage() {
   const { items, setQty, remove, ready } = useCart();
+  const { pin, ready: pinReady } = useDelivery();
   const [products, setProducts] = useState<SfProduct[] | null>(null);
+  const [rules, setRules] = useState<DeliveryRules>(DEFAULT_DELIVERY_RULES);
 
   useEffect(() => {
     fetch("/api/catalog")
       .then((r) => r.json())
-      .then((d) => setProducts(d.products as SfProduct[]))
+      .then((d) => {
+        setProducts(d.products as SfProduct[]);
+        if (d.delivery) setRules(d.delivery as DeliveryRules);
+      })
       .catch(() => setProducts([]));
   }, []);
 
@@ -53,16 +62,13 @@ export default function CartPage() {
     );
   }
 
-  const total = rows.reduce(
-    (sum, r) =>
-      sum +
-      (r.product.pricePerKg * r.product.packSizeGrams * r.item.packets) / 1000,
-    0
-  );
-  const totalKg = rows.reduce(
-    (sum, r) => sum + (r.product.packSizeGrams * r.item.packets) / 1000,
-    0
-  );
+  const lines = rows.map((r) => {
+    const kg = (r.product.packSizeGrams * r.item.packets) / 1000;
+    return { brand: r.product.brand, kg, amount: kg * r.product.pricePerKg };
+  });
+  const totals = orderTotals(lines, pin?.rules ?? rules, pin?.zone ?? null);
+  const totalKg = lines.reduce((sum, l) => sum + l.kg, 0);
+  const shortfall = (totals.quote?.shortfalls.length ?? 0) > 0;
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8">
@@ -140,23 +146,38 @@ export default function CartPage() {
       </div>
 
       <aside className="rounded-2xl bg-card border border-line shadow-card p-4 lg:sticky lg:top-24">
-        <div className="flex items-center justify-between text-sm text-ink-soft">
-          <span>Total weight</span>
-          <span>{formatKg(totalKg)}</span>
-        </div>
-        <div className="mt-1 flex items-center justify-between text-lg font-bold">
-          <span>Total</span>
-          <span>{formatINR(total)}</span>
-        </div>
-        <p className="mt-1 text-xs text-ink-soft">
+        {pinReady && !pin && (
+          <div className="mb-3">
+            <PincodeInline />
+          </div>
+        )}
+        {pin && (
+          <p className="mb-2 text-xs text-ink-soft">
+            Delivering to{" "}
+            <span className="font-semibold text-ink">
+              {pin.location.pincode} · {placeLabel(pin.location)}
+            </span>
+          </p>
+        )}
+        <OrderTotals totals={totals} pin={pin} totalKg={totalKg} />
+        <p className="mt-2 text-xs text-ink-soft">
           Pay online by UPI or cash on delivery — updates arrive on WhatsApp.
         </p>
-        <Link
-          href="/checkout"
-          className="mt-4 flex h-12 items-center justify-center rounded-full bg-pine font-semibold text-mist hover:bg-pine-dark"
-        >
-          Continue to checkout
-        </Link>
+        {shortfall ? (
+          <span
+            aria-disabled="true"
+            className="mt-4 flex h-12 cursor-not-allowed items-center justify-center rounded-full bg-pine/40 font-semibold text-mist"
+          >
+            Add the minimum to continue
+          </span>
+        ) : (
+          <Link
+            href="/checkout"
+            className="mt-4 flex h-12 items-center justify-center rounded-full bg-pine font-semibold text-mist hover:bg-pine-dark"
+          >
+            Continue to checkout
+          </Link>
+        )}
       </aside>
       </div>
     </div>

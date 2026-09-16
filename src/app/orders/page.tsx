@@ -167,6 +167,12 @@ export default function OrdersPage() {
                       )}
                     </li>
                   ))}
+                  {(o.deliveryCharge ?? 0) > 0 && (
+                    <li className="flex justify-between gap-2">
+                      <span>Delivery{o.deliveryPincode ? ` to ${o.deliveryPincode}` : ""}</span>
+                      <span className="shrink-0">{formatINR(o.deliveryCharge ?? 0)}</span>
+                    </li>
+                  )}
                 </ul>
               )}
 

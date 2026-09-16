@@ -4,6 +4,8 @@
  * and calls the WebStoreAPI Apex REST service (/services/apexrest/store/v1).
  */
 
+import type { DeliveryRules } from "./delivery";
+
 export interface SfProduct {
   slug: string;
   name: string;
@@ -36,6 +38,10 @@ export interface SfOrderInput {
   name: string;
   businessName?: string;
   address?: string;
+  /** Delivery PIN code with its India Post districts and state. */
+  pincode: string;
+  districts: string[];
+  state: string;
   gstin?: string;
   note?: string;
   orderRef: string;
@@ -51,7 +57,9 @@ export interface SfOrderResult {
   accountName: string;
   newCustomer: boolean;
   status: string;
+  /** Products with GST plus the delivery charge. */
   total: number;
+  deliveryCharge?: number | null;
   duplicate: boolean;
 }
 
@@ -101,7 +109,10 @@ export interface SfPastOrder {
   paymentStatus: string | null;
   /** 'Online' | 'Cash on Delivery' (null for pre-feature orders). */
   paymentMethod?: string | null;
+  /** Products with GST plus the delivery charge. */
   total: number | null;
+  deliveryCharge?: number | null;
+  deliveryPincode?: string | null;
   collected: number | null;
   balanceDue: number | null;
   expectedDelivery: string | null;
@@ -248,11 +259,18 @@ async function readError(res: Response): Promise<string> {
 
 // ── API surface ──────────────────────────────────────────────────────────
 
-export async function fetchCatalog(): Promise<SfProduct[]> {
+export async function fetchCatalog(): Promise<{
+  products: SfProduct[];
+  /** Absent until Salesforce has the delivery rules deployed. */
+  delivery: DeliveryRules | null;
+}> {
   const res = await sfFetch("/store/v1/catalog");
   if (!res.ok) throw new Error(await readError(res));
-  const json = (await res.json()) as { products: SfProduct[] };
-  return json.products;
+  const json = (await res.json()) as {
+    products: SfProduct[];
+    delivery?: DeliveryRules;
+  };
+  return { products: json.products, delivery: json.delivery ?? null };
 }
 
 export async function placeOrder(input: SfOrderInput): Promise<SfOrderResult> {

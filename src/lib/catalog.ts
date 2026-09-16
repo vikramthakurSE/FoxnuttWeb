@@ -1,5 +1,6 @@
 import { fetchCatalog, sfConfigured, type SfProduct } from "./salesforce";
 import { isDemo } from "./demo";
+import { DEFAULT_DELIVERY_RULES, type DeliveryRules } from "./delivery";
 
 /**
  * Catalog with a short in-memory cache so browsing doesn't hammer
@@ -11,7 +12,12 @@ import { isDemo } from "./demo";
 
 const TTL_MS = 60 * 1000;
 
-let cache: { products: SfProduct[]; at: number; live: boolean } | null = null;
+let cache: {
+  products: SfProduct[];
+  delivery: DeliveryRules;
+  at: number;
+  live: boolean;
+} | null = null;
 
 export const FALLBACK_PRODUCTS: SfProduct[] = [
   {
@@ -113,6 +119,8 @@ export const FALLBACK_PRODUCTS: SfProduct[] = [
 export async function getCatalog(): Promise<{
   products: SfProduct[];
   live: boolean;
+  /** Delivery rules from Salesforce, or the launch defaults when unavailable. */
+  delivery: DeliveryRules;
 }> {
   // Demo mode: pretend everything is in stock so the flow is walkable.
   // One product is left out of stock to show that state too.
@@ -129,22 +137,24 @@ export async function getCatalog(): Promise<{
         };
       }),
       live: true,
+      delivery: DEFAULT_DELIVERY_RULES,
     };
   }
   if (cache && Date.now() - cache.at < TTL_MS) {
-    return { products: cache.products, live: cache.live };
+    return { products: cache.products, live: cache.live, delivery: cache.delivery };
   }
   if (sfConfigured()) {
     try {
-      const products = await fetchCatalog();
-      cache = { products, at: Date.now(), live: true };
-      return { products, live: true };
+      const { products, delivery: fetched } = await fetchCatalog();
+      const delivery = fetched ?? DEFAULT_DELIVERY_RULES;
+      cache = { products, delivery, at: Date.now(), live: true };
+      return { products, live: true, delivery };
     } catch (e) {
       console.error("Catalog fetch from Salesforce failed:", e);
-      if (cache) return { products: cache.products, live: cache.live };
+      if (cache) return { products: cache.products, live: cache.live, delivery: cache.delivery };
     }
   }
-  return { products: FALLBACK_PRODUCTS, live: false };
+  return { products: FALLBACK_PRODUCTS, live: false, delivery: DEFAULT_DELIVERY_RULES };
 }
 
 export async function getProduct(

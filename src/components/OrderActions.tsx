@@ -36,11 +36,16 @@ export default function OrderActions({
   );
   const allZero = lines.every((i) => (packs[i.lineId as string] ?? 0) === 0);
 
-  const newTotal = lines.reduce((sum, i) => {
-    const p = packs[i.lineId as string] ?? 0;
-    const perPack = i.packets ? (i.quantityKg / i.packets) * i.ratePerKg : 0;
-    return sum + p * perPack;
-  }, 0);
+  // Line amounts already include GST; the delivery charge is recalculated
+  // by Salesforce on save, so the current one stands in until then.
+  const newTotal =
+    lines.reduce((sum, i) => {
+      const p = packs[i.lineId as string] ?? 0;
+      const perPack = i.packets
+        ? (i.lineAmount ?? i.quantityKg * i.ratePerKg) / i.packets
+        : 0;
+      return sum + p * perPack;
+    }, 0) + (order.deliveryCharge ?? 0);
 
   async function run(path: string, body: object, failMsg: string) {
     setBusy(true);
@@ -160,6 +165,12 @@ export default function OrderActions({
         <span>New total</span>
         <span>{formatINR(newTotal)}</span>
       </div>
+
+      {(order.deliveryCharge ?? 0) > 0 && (
+        <p className="mt-1 text-xs text-ink-soft">
+          Includes GST and delivery. Delivery is recalculated for the new weight when you save.
+        </p>
+      )}
 
       {allZero && (
         <p className="mt-2 text-xs text-pine-dark">

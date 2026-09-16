@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { useCart } from "./CartProvider";
 import LoginModal from "./LoginModal";
+import PincodeChip from "./PincodeChip";
 
 const links = [
   { href: "/", label: "Home" },
@@ -124,11 +125,13 @@ export default function Header() {
               Login
             </button>
           )}
+          <PincodeChip />
           <CartButton ready={ready} count={count} />
         </nav>
 
         {/* Mobile actions */}
         <div className="flex items-center gap-1.5 sm:hidden">
+          <PincodeChip />
           <CartButton ready={ready} count={count} />
           <button
             type="button"

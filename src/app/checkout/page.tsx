@@ -5,12 +5,23 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { SfPaymentDue, SfProduct, SfSavedAddress } from "@/lib/salesforce";
 import { formatINR } from "@/lib/format";
 import { useCart } from "@/components/CartProvider";
+import { useDelivery } from "@/components/DeliveryProvider";
+import OrderTotals from "@/components/OrderTotals";
+import Spinner from "@/components/Spinner";
+import {
+  DEFAULT_DELIVERY_RULES,
+  isPincode,
+  orderTotals,
+  pincodeInAddress,
+  placeLabel,
+  zoneSummary,
+  type DeliveryRules,
+} from "@/lib/delivery";
 import BusinessAccountAccess from "@/components/BusinessAccountAccess";
 import GstinVerify, { type GstinVerifyResult } from "@/components/GstinVerify";
 import PaymentDueBlock from "@/components/PaymentDueBlock";
 import OnlinePaymentPanel from "@/components/OnlinePaymentPanel";
 import PlaceOrderButton, { type PlaceOrderButtonHandle } from "@/components/PlaceOrderButton";
-import Spinner from "@/components/Spinner";
 
 type Step = "identify" | "details" | "done";
 
@@ -28,6 +39,13 @@ interface PlacedOrder {
 export default function CheckoutPage() {
   const { items, clear, ready } = useCart();
   const [products, setProducts] = useState<SfProduct[] | null>(null);
+  const [rules, setRules] = useState<DeliveryRules>(DEFAULT_DELIVERY_RULES);
+  // The PIN code field drives the shared delivery PIN code, so the header
+  // chip and this form always agree.
+  const { pin, ready: pinReady, setPincode } = useDelivery();
+  const [pincode, setPincodeField] = useState("");
+  const [pinChecking, setPinChecking] = useState(false);
+  const [pinError, setPinError] = useState<string | null>(null);
   const [step, setStep] = useState<Step>("identify");
   // True while checkout asks the backend who is signed in, whether a
   // payment is overdue, and which addresses are saved. Nothing else renders
@@ -63,6 +81,18 @@ export default function CheckoutPage() {
   const placeOrderRef = useRef<PlaceOrderButtonHandle>(null);
   const [error, setError] = useState<string | null>(null);
   const [placed, setPlaced] = useState<PlacedOrder | null>(null);
+
+  const checkPincode = useCallback(
+    async (value: string) => {
+      setPincodeField(value);
+      setPinError(null);
+      if (!isPincode(value)) return;
+      setPinChecking(true);
+      setPinError(await setPincode(value));
+      setPinChecking(false);
+    },
+    [setPincode]
+  );
   // Set when Salesforce says an old delivery is still unpaid: the form is
   // replaced by the pay-first panel until a recheck comes back clear.
   const [due, setDue] = useState<SfPaymentDue | null>(null);
@@ -127,6 +157,8 @@ export default function CheckoutPage() {
       if (saved.length > 0) {
         setAddressChoice(0);
         setAddress(saved[0].address);
+        const savedPin = pincodeInAddress(saved[0].address);
+        if (savedPin) void checkPincode(savedPin);
       } else {
         setAddressChoice("new");
       }
@@ -138,15 +170,24 @@ export default function CheckoutPage() {
     } finally {
       setBooting(false);
     }
-  }, []);
+  }, [checkPincode]);
 
   useEffect(() => {
     void bootstrap();
     fetch("/api/catalog")
       .then((r) => r.json())
-      .then((d) => setProducts(d.products as SfProduct[]))
+      .then((d) => {
+        setProducts(d.products as SfProduct[]);
+        if (d.delivery) setRules(d.delivery as DeliveryRules);
+      })
       .catch(() => setProducts([]));
   }, [bootstrap]);
+
+  // Start from the header's PIN code when the address did not supply one.
+  useEffect(() => {
+    if (pinReady && pin && pincode === "") setPincodeField(pin.location.pincode);
+    // Only seeds an empty field; typing must not be overwritten.
+  }, [pinReady, pin]);
 
   const rows =
     products === null
@@ -161,12 +202,19 @@ export default function CheckoutPage() {
               Boolean(r.product)
           );
 
-  const total = rows.reduce(
-    (sum, r) =>
-      sum +
-      (r.product.pricePerKg * r.product.packSizeGrams * r.item.packets) / 1000,
-    0
+  // The shared PIN code only counts once it is the one in the field.
+  const pinInfo = pin && pin.location.pincode === pincode ? pin : null;
+  const totals = orderTotals(
+    rows.map((r) => {
+      const kg = (r.product.packSizeGrams * r.item.packets) / 1000;
+      return { brand: r.product.brand, kg, amount: kg * r.product.pricePerKg };
+    }),
+    pinInfo?.rules ?? rules,
+    pinInfo?.zone ?? null
   );
+  const total = totals.total;
+  const shortfall = (totals.quote?.shortfalls.length ?? 0) > 0;
+  const pinBlocking = !pinInfo || pinChecking;
 
   // First-time buyers must attempt GSTIN verification (pass or soft-fail)
   // before they can place an order; existing business-code accounts never
@@ -193,6 +241,7 @@ export default function CheckoutPage() {
           name,
           businessName,
           address,
+          pincode,
           gstin: firstTime ? gstinResolution?.gstin ?? "" : gstin,
           gstinVerified: firstTime ? Boolean(gstinResolution?.verified) : gstinVerified,
           note,
@@ -374,7 +423,7 @@ export default function CheckoutPage() {
           className="rounded-2xl bg-card border border-line shadow-card p-5 sm:p-6"
           onSubmit={(e) => {
             e.preventDefault();
-            if (!gstinBlocking) placeOrderRef.current?.trigger();
+            if (!gstinBlocking && !pinBlocking && !shortfall) placeOrderRef.current?.trigger();
           }}
         >
           <h2 className="font-display text-xl font-bold">Delivery details</h2>
@@ -447,6 +496,43 @@ export default function CheckoutPage() {
             className="mt-1.5 w-full rounded-xl border border-line bg-card px-4 py-3 outline-none focus:border-pine"
           />
 
+          <label className="mt-4 block text-sm font-semibold" htmlFor="nn-pincode">
+            PIN code *
+          </label>
+          <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1.5">
+            <input
+              id="nn-pincode"
+              inputMode="numeric"
+              autoComplete="postal-code"
+              required
+              value={pincode}
+              onChange={(e) =>
+                void checkPincode(e.target.value.replace(/\D/g, "").slice(0, 6))
+              }
+              aria-invalid={Boolean(pinError)}
+              aria-describedby="nn-pincode-status"
+              className="h-12 w-36 rounded-xl border border-line bg-card px-4 tracking-widest outline-none focus:border-pine"
+            />
+            <p id="nn-pincode-status" className="min-w-0 flex-1 text-sm" aria-live="polite">
+              {pinChecking ? (
+                <span className="inline-flex items-center gap-2 text-ink-soft">
+                  <Spinner size={14} /> Checking PIN code…
+                </span>
+              ) : pinError ? (
+                <span className="text-danger">{pinError}</span>
+              ) : pinInfo ? (
+                <>
+                  <span className="block font-semibold">{placeLabel(pinInfo.location)}</span>
+                  <span className="block text-xs text-ink-soft">
+                    {zoneSummary(pinInfo.rules, pinInfo.zone)}
+                  </span>
+                </>
+              ) : (
+                <span className="text-ink-soft">We check delivery rules for your area.</span>
+              )}
+            </p>
+          </div>
+
           {savedAddresses.length > 0 && (
             <div className="mt-3">
               <p className="text-xs font-semibold uppercase tracking-wide text-ink-soft">
@@ -464,6 +550,8 @@ export default function CheckoutPage() {
                         onClick={() => {
                           setAddressChoice(i);
                           setAddress(a.address);
+                          const savedPin = pincodeInAddress(a.address);
+                          if (savedPin) void checkPincode(savedPin);
                         }}
                         className={`flex w-full items-start gap-3 rounded-xl border px-3.5 py-3 text-left text-sm transition-colors ${
                           active
@@ -610,15 +698,24 @@ export default function CheckoutPage() {
           <PlaceOrderButton
             ref={placeOrderRef}
             idleLabel={`Place order · ${formatINR(total)}`}
-            disabled={gstinBlocking}
+            disabled={gstinBlocking || pinBlocking || shortfall}
             onSubmit={submitOrder}
             onSuccessShown={finishOrder}
           />
-          {gstinBlocking && (
+          {gstinBlocking ? (
             <p className="mt-2 text-center text-xs font-semibold text-pine">
               Verify your GSTIN above to continue.
             </p>
-          )}
+          ) : pinBlocking && !pinChecking ? (
+            <p className="mt-2 text-center text-xs font-semibold text-pine">
+              Enter a valid delivery PIN code to continue.
+            </p>
+          ) : shortfall ? (
+            <p className="mt-2 text-center text-xs font-semibold text-pine">
+              Add the minimum weight shown in the summary, or{" "}
+              <Link href="/cart" className="underline">edit your cart</Link>.
+            </p>
+          ) : null}
           <p className="mt-2 text-center text-xs text-ink-soft">
             {paymentMethod === "online"
               ? "You will see our UPI QR on the next screen."
@@ -651,9 +748,8 @@ export default function CheckoutPage() {
                     </span>
                   </div>
                 ))}
-                <div className="mt-2 border-t border-line pt-2 flex justify-between font-bold text-base">
-                  <span>Total</span>
-                  <span>{formatINR(total)}</span>
+                <div className="mt-2 border-t border-line pt-2">
+                  <OrderTotals totals={totals} pin={pinInfo} />
                 </div>
               </div>
             </aside>

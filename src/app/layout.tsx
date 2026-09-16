@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Fraunces, Inter } from "next/font/google";
 import "./globals.css";
 import { CartProvider } from "@/components/CartProvider";
+import { DeliveryProvider } from "@/components/DeliveryProvider";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import NnCornerBadge from "@/components/NnMonogram";
@@ -39,10 +40,12 @@ export default function RootLayout({
     <html lang="en" className={`${fraunces.variable} ${inter.variable}`}>
       <body className="paper min-h-screen flex flex-col">
         <CartProvider>
-          <Header />
-          <main className="flex-1">{children}</main>
-          <Footer />
-          <NnCornerBadge />
+          <DeliveryProvider>
+            <Header />
+            <main className="flex-1">{children}</main>
+            <Footer />
+            <NnCornerBadge />
+          </DeliveryProvider>
         </CartProvider>
       </body>
     </html>

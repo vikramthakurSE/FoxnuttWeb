@@ -4,6 +4,8 @@ import { sql, hasDb } from "@/lib/db";
 import { getSession } from "@/lib/session";
 import { resyncFailedOrders } from "@/lib/resync";
 import { getCatalog } from "@/lib/catalog";
+import { lookupPincode } from "@/lib/pincode";
+import { GST_RATE, orderTotals, placeLabel, zoneFor } from "@/lib/delivery";
 import {
   placeOrder,
   fetchOrders,
@@ -25,6 +27,8 @@ interface OrderBody {
   name: string;
   businessName?: string;
   address: string;
+  /** 6-digit delivery PIN code; decides minimums and delivery charge. */
+  pincode?: string;
   gstin?: string;
   /** Only meaningful for first-time buyers — see GstinVerify. */
   gstinVerified?: boolean;
@@ -99,15 +103,23 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  const location = lookupPincode(body.pincode ?? "");
+  if (!location) {
+    return NextResponse.json(
+      { error: "Please enter a valid 6-digit delivery PIN code." },
+      { status: 400 }
+    );
+  }
+
   // Validate items against the live catalog and compute the total server-side
-  const { products, live } = await getCatalog();
+  const { products, live, delivery } = await getCatalog();
   if (!live) {
     return NextResponse.json(
       { error: "Ordering is temporarily unavailable. Please try again shortly." },
       { status: 503 }
     );
   }
-  let total = 0;
+  const lines: { brand: string; kg: number; amount: number }[] = [];
   for (const item of body.items) {
     const p = products.find((x) => x.slug === item.slug);
     if (!p || !Number.isInteger(item.packets) || item.packets <= 0) {
@@ -124,8 +136,32 @@ export async function POST(req: NextRequest) {
         { status: 409 }
       );
     }
-    total += (p.pricePerKg * p.packSizeGrams * item.packets) / 1000;
+    const kg = (p.packSizeGrams * item.packets) / 1000;
+    lines.push({ brand: p.brand, kg, amount: kg * p.pricePerKg });
   }
+
+  // Minimum weight per brand outside Bangalore. Salesforce enforces the same
+  // rule; checking here keeps a refused order out of the local order log.
+  const totals = orderTotals(lines, delivery, zoneFor(delivery, location));
+  const shortfalls = totals.quote?.shortfalls ?? [];
+  if (shortfalls.length > 0) {
+    return NextResponse.json(
+      {
+        error: `Minimum order for ${placeLabel(location)}: ${shortfalls
+          .map((f) => `${f.brand} needs at least ${f.minKg} kg (you have ${Math.round(f.kg * 100) / 100} kg)`)
+          .join("; ")}.`,
+      },
+      { status: 400 }
+    );
+  }
+  let total = totals.total;
+
+  // The PIN code travels inside the address too, so it is on the saved
+  // address the next time this client checks out.
+  const address = body.address.trim();
+  const addressWithPin = address.includes(location.pincode)
+    ? address
+    : `${address}, ${location.pincode}`;
 
   // A GSTIN that wasn't cleanly auto-verified is a soft block, not a hard
   // one — the order still goes through, flagged in the note so whoever
@@ -148,7 +184,10 @@ export async function POST(req: NextRequest) {
     items: body.items,
     name: body.name.trim(),
     businessName: body.businessName?.trim() || null,
-    address: body.address.trim(),
+    address: addressWithPin,
+    pincode: location.pincode,
+    districts: location.districts,
+    state: location.state,
     gstin: body.gstin?.trim() || null,
     note: noteText || null,
     // Retries must resolve the same account, so remember how this order
@@ -187,7 +226,7 @@ export async function POST(req: NextRequest) {
           quantityKg,
           ratePerKg: p.pricePerKg,
           packets: item.packets,
-          lineAmount: quantityKg * p.pricePerKg,
+          lineAmount: quantityKg * p.pricePerKg * (1 + GST_RATE),
         };
       }),
     });
@@ -238,12 +277,17 @@ export async function POST(req: NextRequest) {
       name: payload.name,
       businessName: payload.businessName ?? undefined,
       address: payload.address,
+      pincode: payload.pincode,
+      districts: payload.districts,
+      state: payload.state,
       gstin: payload.gstin ?? undefined,
       note: payload.note ?? undefined,
       orderRef: orderId,
       paymentMethod,
       items: body.items,
     });
+    // Salesforce's total is what the client is asked to pay.
+    if (result.total != null) total = Number(result.total);
     await db`
       UPDATE orders SET
         status = 'synced', sf_sale_id = ${result.saleId},

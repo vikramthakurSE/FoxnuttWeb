@@ -6,6 +6,10 @@ export interface OrderPayload {
   name: string;
   businessName: string | null;
   address: string;
+  /** Absent on orders queued before PIN codes were required. */
+  pincode?: string;
+  districts?: string[];
+  state?: string;
   gstin: string | null;
   note: string | null;
   paymentMethod?: "online" | "cod" | null;
@@ -45,6 +49,9 @@ export async function resyncFailedOrders(
         name: row.payload.name,
         businessName: row.payload.businessName ?? undefined,
         address: row.payload.address,
+        pincode: row.payload.pincode ?? "",
+        districts: row.payload.districts ?? [],
+        state: row.payload.state ?? "",
         gstin: row.payload.gstin ?? undefined,
         note: row.payload.note ?? undefined,
         paymentMethod: row.payload.paymentMethod ?? undefined,

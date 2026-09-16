@@ -5,8 +5,18 @@ const inr = new Intl.NumberFormat("en-IN", {
   minimumFractionDigits: 0,
 });
 
+const inrPaise = new Intl.NumberFormat("en-IN", {
+  style: "currency",
+  currency: "INR",
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
+/** Whole rupees stay bare (₹1,200); anything with paise shows both digits (₹12.50). */
 export function formatINR(amount: number): string {
-  return inr.format(amount);
+  return Number.isInteger(Math.round(amount * 100) / 100)
+    ? inr.format(amount)
+    : inrPaise.format(amount);
 }
 
 export function formatKg(kg: number): string {

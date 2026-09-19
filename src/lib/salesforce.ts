@@ -115,6 +115,10 @@ export interface SfPastOrder {
   deliveryPincode?: string | null;
   collected: number | null;
   balanceDue: number | null;
+  /** Cancelled orders that held payments: "Pending" until sent back, then "Refunded". */
+  refundStatus?: "Pending" | "Refunded" | null;
+  refundAmount?: number | null;
+  refundedOn?: string | null;
   expectedDelivery: string | null;
   items: {
     lineId?: string;

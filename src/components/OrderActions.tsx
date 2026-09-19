@@ -93,6 +93,13 @@ export default function OrderActions({
         <p className="text-sm">
           Cancel <span className="font-semibold">{order.saleName}</span>? We
           will confirm this on your WhatsApp.
+          {(order.collected ?? 0) > 0 && (
+            <>
+              {" "}Your payment of{" "}
+              <span className="font-semibold">{formatINR(order.collected ?? 0)}</span>{" "}
+              will be refunded to you within 24–48 hours.
+            </>
+          )}
         </p>
         <div className="mt-3 flex gap-2">
           <button

@@ -191,6 +191,43 @@ export default function OrdersPage() {
                 </span>
               </div>
 
+              {o.status === "Cancelled" && (() => {
+                const amount = o.refundAmount ?? o.collected ?? 0;
+                if (o.refundStatus === "Refunded") {
+                  return (
+                    <div className="mt-3 rounded-xl border border-leaf/40 bg-leaf/10 px-4 py-3 text-sm">
+                      <p className="font-semibold text-ink">✓ Refunded {formatINR(amount)}</p>
+                      <p className="mt-0.5 text-ink-soft">
+                        {o.refundedOn
+                          ? `Credited back to you on ${formatDate(o.refundedOn)}.`
+                          : "Credited back to you."}{" "}
+                        We sent the confirmation on WhatsApp.
+                      </p>
+                    </div>
+                  );
+                }
+                if (amount > 0) {
+                  return (
+                    <div className="mt-3 rounded-xl border border-gold/40 bg-gold/10 px-4 py-3 text-sm">
+                      <p className="font-semibold text-ink">
+                        Refund of {formatINR(amount)} on its way
+                      </p>
+                      <p className="mt-0.5 text-ink-soft">
+                        This order was cancelled. Your payment will be credited
+                        back to you within 24–48 hours, and you&apos;ll get a
+                        WhatsApp message once it&apos;s done.
+                      </p>
+                    </div>
+                  );
+                }
+                return (
+                  <div className="mt-3 rounded-xl border border-line bg-mist-2 px-4 py-3 text-sm text-ink-soft">
+                    This order was cancelled. No payment was taken, so there&apos;s
+                    nothing to refund.
+                  </div>
+                );
+              })()}
+
               {o.orderRef &&
                 o.status !== "Cancelled" &&
                 (o.balanceDue ?? 0) <= 0 &&

@@ -5,7 +5,7 @@ import { getSession } from "@/lib/session";
 import { resyncFailedOrders } from "@/lib/resync";
 import { getCatalog } from "@/lib/catalog";
 import { lookupPincode } from "@/lib/pincode";
-import { GST_RATE, orderTotals, placeLabel, zoneFor } from "@/lib/delivery";
+import { orderTotals, placeLabel, zoneFor } from "@/lib/delivery";
 import {
   placeOrder,
   fetchOrders,
@@ -226,7 +226,7 @@ export async function POST(req: NextRequest) {
           quantityKg,
           ratePerKg: p.pricePerKg,
           packets: item.packets,
-          lineAmount: quantityKg * p.pricePerKg * (1 + GST_RATE),
+          lineAmount: quantityKg * p.pricePerKg,
         };
       }),
     });

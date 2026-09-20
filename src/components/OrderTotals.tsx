@@ -9,8 +9,9 @@ import {
 import type { ResolvedPincode } from "./DeliveryProvider";
 
 /**
- * Subtotal, GST, delivery and total for the cart and checkout, with what is
- * missing when the PIN code needs a minimum weight per brand.
+ * Products, the GST already inside that price, delivery and total for the
+ * cart and checkout, with what is missing when the PIN code needs a minimum
+ * weight per brand.
  */
 export default function OrderTotals({
   totals,
@@ -21,14 +22,14 @@ export default function OrderTotals({
   pin: ResolvedPincode | null;
   totalKg?: number;
 }) {
-  const { subtotal, gst, quote, total } = totals;
+  const { productsIncl, gst, quote, total } = totals;
   return (
     <div className="text-sm">
       {totalKg != null && (
         <Row label="Total weight" value={formatKgShort(totalKg)} muted />
       )}
-      <Row label="Products" value={formatINR(subtotal)} muted />
-      <Row label="GST (5%)" value={formatINR(gst)} muted />
+      <Row label="Products" value={formatINR(productsIncl)} muted />
+      <Row label="Includes GST (5%)" value={formatINR(gst)} muted />
       <Row
         label="Delivery"
         value={

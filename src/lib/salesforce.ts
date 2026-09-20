@@ -17,6 +17,8 @@ export interface SfProduct {
   packLabel: string | null;
   pricePerKg: number;
   pricePerPacket: number;
+  /** Printed MRP per packet, struck through next to the price. */
+  mrpPerPacket?: number | null;
   minOrderPackets: number;
   badge: string | null;
   gstApplied: boolean;

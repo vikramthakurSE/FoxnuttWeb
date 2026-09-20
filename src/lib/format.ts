@@ -19,6 +19,12 @@ export function formatINR(amount: number): string {
     : inrPaise.format(amount);
 }
 
+/** Whole-number discount off the MRP, or 0 when there's nothing to show. */
+export function discountPercent(mrp: number, price: number): number {
+  if (!mrp || mrp <= price) return 0;
+  return Math.round((1 - price / mrp) * 100);
+}
+
 export function formatKg(kg: number): string {
   return Number.isInteger(kg) ? `${kg} kg` : `${kg.toFixed(2)} kg`;
 }

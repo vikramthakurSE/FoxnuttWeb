@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useLayoutEffect, useRef, useState, type MouseEvent } from "react";
 import type { SfProduct } from "@/lib/salesforce";
-import { formatINR } from "@/lib/format";
+import { discountPercent, formatINR } from "@/lib/format";
 import { dropOntoCard, liftCard, reducedMotion } from "@/lib/productMorph";
 import { useCart } from "./CartProvider";
 import ProductImage from "./ProductImage";
@@ -17,6 +17,10 @@ export default function ProductCard({ product }: { product: SfProduct }) {
   const opening = useRef(false);
 
   const out = !product.inStock;
+  const off = discountPercent(
+    product.mrpPerPacket ?? 0,
+    product.pricePerPacket,
+  );
   const href = `/products/${product.slug}`;
 
   // Back from the product page: open the tile out of its circle.
@@ -68,11 +72,23 @@ export default function ProductCard({ product }: { product: SfProduct }) {
         )}
         <div className="mt-auto pt-2 flex items-center justify-between gap-2">
           <div>
-            <p className="font-bold text-lg leading-none">
-              {formatINR(product.pricePerPacket)}
-            </p>
+            <div className="flex items-baseline gap-1.5">
+              <p className="font-bold text-lg leading-none">
+                {formatINR(product.pricePerPacket)}
+              </p>
+              {off > 0 && (
+                <span className="text-xs text-ink-soft line-through">
+                  {formatINR(product.mrpPerPacket!)}
+                </span>
+              )}
+            </div>
             <p className="text-[11px] text-ink-soft mt-0.5">
               per {product.packLabel ?? "pack"}
+              {off > 0 && (
+                <span className="ml-1 font-semibold text-leaf">
+                  · {off}% off
+                </span>
+              )}
             </p>
           </div>
           <button

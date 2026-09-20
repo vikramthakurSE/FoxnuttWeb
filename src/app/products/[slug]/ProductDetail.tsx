@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useLayoutEffect, useRef, useState } from "react";
 import type { SfProduct } from "@/lib/salesforce";
 import { brandTheme } from "@/lib/brand";
-import { formatINR, formatKg } from "@/lib/format";
+import { discountPercent, formatINR, formatKg } from "@/lib/format";
 import {
   MORPH_EASE,
   createBloom,
@@ -44,6 +44,10 @@ export default function ProductDetail({
   const lowStock =
     product.inStock && product.availablePackets <= Math.max(5, min);
   const kgForQty = (qty * product.packSizeGrams) / 1000;
+  const off = discountPercent(
+    product.mrpPerPacket ?? 0,
+    product.pricePerPacket,
+  );
 
   /**
    * Grows the brand panel out of the card's photo ("open"), or shrinks it
@@ -256,13 +260,25 @@ export default function ProductDetail({
             </p>
           )}
 
-          <p data-nnp-item className="mt-4 text-3xl font-bold">
-            {formatINR(product.pricePerPacket)}
-            <span className="ml-2 text-sm font-normal text-ink-soft">
+          <div data-nnp-item className="mt-4">
+            <p className="flex flex-wrap items-baseline gap-x-3 gap-y-1 text-3xl font-bold">
+              {formatINR(product.pricePerPacket)}
+              {off > 0 && (
+                <>
+                  <span className="text-xl font-semibold text-ink-soft line-through">
+                    {formatINR(product.mrpPerPacket!)}
+                  </span>
+                  <span className="rounded-full bg-leaf/15 px-2.5 py-1 text-xs font-bold uppercase tracking-wide text-leaf">
+                    Save {off}%
+                  </span>
+                </>
+              )}
+            </p>
+            <p className="mt-1 text-sm text-ink-soft">
               per {product.packLabel ?? "pack"} ·{" "}
               {formatINR(product.pricePerKg)}/kg
-            </span>
-          </p>
+            </p>
+          </div>
 
           <div data-nnp-item className="mt-2 text-sm">
             {out ? (

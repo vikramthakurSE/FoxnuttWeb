@@ -84,6 +84,7 @@ export default function ProductCard({ product }: { product: SfProduct }) {
             </div>
             <p className="text-[11px] text-ink-soft mt-0.5">
               per {product.packLabel ?? "pack"}
+              <span className="ml-1">· incl. GST</span>
               {off > 0 && (
                 <span className="ml-1 font-semibold text-leaf">
                   · {off}% off

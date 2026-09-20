@@ -36,7 +36,7 @@ export const DEFAULT_DELIVERY_RULES: DeliveryRules = {
   maxCharge: 90,
 };
 
-/** GST on products only, never on delivery. Matches Salesforce GST_RATE. */
+/** GST inside the listed product prices, never on delivery. Matches Salesforce GST_RATE. */
 export const GST_RATE = 0.05;
 
 /** A PIN code resolved against India Post data. */
@@ -150,9 +150,12 @@ export interface PricedLine extends CartLine {
 }
 
 export interface OrderTotals {
+  /** What the products cost at the listed, GST-inclusive prices. */
+  productsIncl: number;
+  /** Net of tax — productsIncl minus the GST inside it. */
   subtotal: number;
+  /** The GST already contained in productsIncl. */
   gst: number;
-  /** Null until a PIN code is known. */
   quote: DeliveryQuote | null;
   total: number;
 }
@@ -163,10 +166,20 @@ export function orderTotals(
   rules: DeliveryRules,
   zone: DeliveryZone | null
 ): OrderTotals {
-  const subtotal = lines.reduce((s, l) => s + l.amount, 0);
-  const gst = Math.round(subtotal * GST_RATE * 100) / 100;
+  const round2 = (n: number) => Math.round(n * 100) / 100;
+  // Listed prices include GST, so the tax is carved out of them rather than
+  // added on: the customer pays the price shown on the product page.
+  const productsIncl = round2(lines.reduce((s, l) => s + l.amount, 0));
+  const gst = round2(productsIncl - productsIncl / (1 + GST_RATE));
+  const subtotal = round2(productsIncl - gst);
   const quote = zone ? quoteDelivery(rules, zone, lines) : null;
-  return { subtotal, gst, quote, total: subtotal + gst + (quote?.charge ?? 0) };
+  return {
+    productsIncl,
+    subtotal,
+    gst,
+    quote,
+    total: round2(productsIncl + (quote?.charge ?? 0)),
+  };
 }
 
 export function formatKgShort(kg: number): string {

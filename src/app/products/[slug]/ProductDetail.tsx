@@ -276,7 +276,7 @@ export default function ProductDetail({
             </p>
             <p className="mt-1 text-sm text-ink-soft">
               per {product.packLabel ?? "pack"} ·{" "}
-              {formatINR(product.pricePerKg)}/kg
+              {formatINR(product.pricePerKg)}/kg · incl. GST
             </p>
           </div>
 

@@ -115,8 +115,8 @@ html[data-nn-intro] body { overflow: hidden; }
   position: absolute;
   left: 50%;
   top: 50%;
-  width: min(43.5vw, 53.8vh, 230px);
-  height: min(43.5vw, 53.8vh, 230px);
+  width: min(46vw, 56vh, 300px);
+  height: min(46vw, 56vh, 300px);
   border-radius: 50%;
   overflow: hidden;
   will-change: transform, opacity;

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getCatalog } from "@/lib/catalog";
 import ProductCard from "@/components/ProductCard";
+import IntroSequence from "@/components/IntroSequence";
 
 export const dynamic = "force-dynamic";
 
@@ -29,6 +30,8 @@ export default async function HomePage() {
 
   return (
     <div>
+      <IntroSequence />
+
       {/* Hero */}
       <section className="mx-auto max-w-5xl px-4 pt-12 pb-10 sm:pt-20 text-center">
         <h1 className="font-display text-4xl sm:text-6xl font-black leading-tight">

@@ -89,3 +89,52 @@ button:not(:disabled),
 @media (prefers-reduced-motion: reduce) {
   .nn-card-wobble { animation: none; }
 }
+
+/* ---------------------------------------------------------------------------
+   First-visit title sequence (see IntroSequence.tsx). The whole thing is gated
+   on data-nn-intro, stamped on <html> before the body paints, so a repeat visit
+   never sees a frame of it and a visitor without JS never sees it at all.
+   --------------------------------------------------------------------------- */
+.nnx-root { display: none; }
+html[data-nn-intro] .nnx-root { display: block; }
+/* The header brand is the wordmark's landing pad, so it stays empty until the
+   flying copy arrives on top of it. */
+html[data-nn-intro] #nn-brand { opacity: 0; }
+html[data-nn-intro] body { overflow: hidden; }
+
+.nnx-root {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  overflow: hidden;
+  pointer-events: none;
+}
+.nnx-curtain { position: absolute; inset: 0; background: #121410; }
+
+.nnx-markbox {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: min(46vw, 56vh, 300px);
+  height: min(46vw, 56vh, 300px);
+  border-radius: 50%;
+  overflow: hidden;
+  will-change: transform, opacity;
+  animation: nnxMarkIn 0.52s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
+@keyframes nnxMarkIn {
+  from { opacity: 0; transform: translate(-50%, -50%) scale(0.82); }
+  to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+.nnx-flight {
+  position: fixed;
+  transform-origin: 0 0;
+  opacity: 0;
+  will-change: transform, opacity;
+}
+/* Gold and ivory while it is still over the curtain; JS warms it to the brand
+   colours as the curtain lifts. */
+.nnx-wm { white-space: nowrap; }
+.nnx-l1 { color: #dcb264; }
+.nnx-l2 { color: #f6f7f2; }

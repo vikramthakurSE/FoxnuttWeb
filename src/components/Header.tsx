@@ -83,7 +83,7 @@ export default function Header() {
   return (
     <header className="sticky top-0 z-40 bg-mist/95 backdrop-blur border-b border-line">
       <div className="mx-auto max-w-5xl px-4 h-16 flex items-center justify-between gap-3">
-        <Link href="/" className="leading-tight" onClick={() => setMenuOpen(false)}>
+        <Link id="nn-brand" href="/" className="leading-tight" onClick={() => setMenuOpen(false)}>
           <span className="font-display text-xl font-bold text-pine block -mb-1">
             Nutty
           </span>

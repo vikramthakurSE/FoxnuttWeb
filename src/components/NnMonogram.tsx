@@ -5,7 +5,7 @@ import Link from "next/link";
  * diagonal fading out, matching the look Vikram picked. Used as the corner badge on every page and,
  * as a static copy, in src/app/icon.svg for the browser tab.
  */
-export function NnMark({ size = 48 }: { size?: number }) {
+export function NnMark({ size = 48 }: { size?: number | string }) {
   return (
     <svg viewBox="0 0 180 180" width={size} height={size} role="img" aria-label="Nutty Nirvana">
       <defs>
